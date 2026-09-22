@@ -101,6 +101,7 @@ class LeagueService extends ChangeNotifier {
       'Niranjan',
       'Ashutosh',
       'Alok',
+      'Aashish',
       'Satish',
       'Shaurya',
       'Mohit',
