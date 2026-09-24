@@ -550,8 +550,9 @@ class LeagueService extends ChangeNotifier {
   }
 
   List<Person> _getAvailableForTeam(int matchNumber, String teamId) {
+    final ownerId = teams.firstWhere((t) => t.id == teamId).ownerPersonId;
     final teamPeople = [
-      ...people.where((p) => p.role == PersonRole.owner && (teamId == 'team_rohan' ? p.id == 'rohan' : p.id == 'saurabh')),
+      ...people.where((p) => p.role == PersonRole.owner && p.id == ownerId),
       ...getTeamPlayers(teamId),
     ];
 
