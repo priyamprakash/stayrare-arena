@@ -3,6 +3,7 @@ import '../models/league.dart';
 import '../services/league_provider.dart';
 import '../services/league_service.dart';
 import 'rules_guide_view.dart';
+import 'setup_view.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
@@ -31,6 +32,24 @@ class HomeView extends StatelessWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: const Icon(Icons.tune_rounded, color: Color(0xFF0D2A20), size: 18),
+            ),
+            tooltip: 'Setup Captains & Pool',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (ctx) => const SetupView()),
+              );
+            },
+          ),
           IconButton(
             icon: Container(
               padding: const EdgeInsets.all(6),
@@ -127,26 +146,96 @@ class HomeView extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
+
+            // Captains & Pool Info Bar
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706), size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${service.teams.isNotEmpty ? service.teams[0].name : "Team 1"} vs ${service.teams.length > 1 ? service.teams[1].name : "Team 2"}',
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Captains: ${service.captain1Name} & ${service.captain2Name} • ${service.people.where((p) => p.role == PersonRole.player).length} players in auction',
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      side: const BorderSide(color: Color(0xFF0D2A20)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (ctx) => const SetupView()),
+                      );
+                    },
+                    icon: const Icon(Icons.tune_rounded, size: 14, color: Color(0xFF0D2A20)),
+                    label: const Text(
+                      'Change',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF0D2A20)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
 
             // Teams Row / Layout
             LayoutBuilder(
               builder: (context, constraints) {
+                if (service.teams.isEmpty) return const SizedBox.shrink();
+                
+                final team1Id = service.teams[0].id;
+                final team2Id = service.teams[1].id;
+
                 if (constraints.maxWidth > 700) {
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(child: _buildCoolTeamCard(context, service, 'team_rohan', const Color(0xFF0D2A20), const Color(0xFF1B4D3E))),
+                      Expanded(child: _buildCoolTeamCard(context, service, team1Id, const Color(0xFF0D2A20), const Color(0xFF1B4D3E))),
                       const SizedBox(width: 16),
-                      Expanded(child: _buildCoolTeamCard(context, service, 'team_saurabh', const Color(0xFF064E3B), const Color(0xFF047857))),
+                      Expanded(child: _buildCoolTeamCard(context, service, team2Id, const Color(0xFF064E3B), const Color(0xFF047857))),
                     ],
                   );
                 }
                 return Column(
                   children: [
-                    _buildCoolTeamCard(context, service, 'team_rohan', const Color(0xFF0D2A20), const Color(0xFF1B4D3E)),
+                    _buildCoolTeamCard(context, service, team1Id, const Color(0xFF0D2A20), const Color(0xFF1B4D3E)),
                     const SizedBox(height: 20),
-                    _buildCoolTeamCard(context, service, 'team_saurabh', const Color(0xFF064E3B), const Color(0xFF047857)),
+                    _buildCoolTeamCard(context, service, team2Id, const Color(0xFF064E3B), const Color(0xFF047857)),
                   ],
                 );
               },

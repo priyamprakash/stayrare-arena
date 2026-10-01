@@ -3,6 +3,8 @@ import '../models/league.dart';
 import '../services/league_provider.dart';
 import '../services/league_service.dart';
 
+import 'setup_view.dart';
+
 class PlayerPoolView extends StatefulWidget {
   const PlayerPoolView({super.key});
 
@@ -32,6 +34,16 @@ class _PlayerPoolViewState extends State<PlayerPoolView> {
       appBar: AppBar(
         title: const Text('Player Directory'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.tune_rounded, color: Color(0xFF0D2A20)),
+            tooltip: 'Setup Captains & Pool',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (ctx) => const SetupView()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF0D2A20)),
             tooltip: 'Add Late Joiner',

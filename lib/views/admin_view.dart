@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/league.dart';
 import '../services/league_provider.dart';
 import '../services/league_service.dart';
+import 'setup_view.dart';
 
 class AdminView extends StatelessWidget {
   const AdminView({super.key});
@@ -16,6 +17,18 @@ class AdminView extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Admin & Audit Log'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.tune_rounded, color: Color(0xFF0D2A20)),
+              tooltip: 'Captains & League Setup',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (ctx) => const SetupView()),
+                );
+              },
+            ),
+          ],
           bottom: const TabBar(
             labelColor: Color(0xFF1B4D3E),
             unselectedLabelColor: Color(0xFF555555),
@@ -139,11 +152,18 @@ class AdminView extends StatelessWidget {
   }
 
   Widget _buildTradesTab(BuildContext context, LeagueService service, List<Person> activePlayers) {
-    final rohanPlayers = activePlayers.where((p) => service.getSigningForPerson(p.id)?.teamId == 'team_rohan').toList();
-    final saurabhPlayers = activePlayers.where((p) => service.getSigningForPerson(p.id)?.teamId == 'team_saurabh').toList();
+    if (service.teams.isEmpty) return const SizedBox.shrink();
+    
+    final t1Id = service.teams[0].id;
+    final t2Id = service.teams[1].id;
+    final t1Name = service.teams[0].name;
+    final t2Name = service.teams[1].name;
 
-    String? selectedRohanPersonId = rohanPlayers.isNotEmpty ? rohanPlayers.first.id : null;
-    String? selectedSaurabhPersonId = saurabhPlayers.isNotEmpty ? saurabhPlayers.first.id : null;
+    final t1Players = activePlayers.where((p) => service.getSigningForPerson(p.id)?.teamId == t1Id).toList();
+    final t2Players = activePlayers.where((p) => service.getSigningForPerson(p.id)?.teamId == t2Id).toList();
+
+    String? selectedT1PersonId = t1Players.isNotEmpty ? t1Players.first.id : null;
+    String? selectedT2PersonId = t2Players.isNotEmpty ? t2Players.first.id : null;
 
     return StatefulBuilder(
       builder: (context, setState) {
@@ -154,7 +174,7 @@ class AdminView extends StatelessWidget {
             children: [
               const Text('1-for-1 Player Trade', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
               const SizedBox(height: 4),
-              const Text('Swap players between Team Rohan and Team Saurabh.', style: TextStyle(color: Color(0xFF555555))),
+              Text('Swap players between $t1Name and $t2Name.', style: const TextStyle(color: Color(0xFF555555))),
               const SizedBox(height: 20),
 
               LayoutBuilder(
@@ -166,16 +186,16 @@ class AdminView extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Team Rohan Player:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                              Text('$t1Name Player:', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
                               const SizedBox(height: 8),
                               DropdownButtonFormField<String>(
-                                initialValue: selectedRohanPersonId,
+                                initialValue: selectedT1PersonId,
                                 isExpanded: true,
                                 decoration: const InputDecoration(border: OutlineInputBorder()),
-                                items: rohanPlayers.map((p) {
+                                items: t1Players.map((p) {
                                   return DropdownMenuItem(value: p.id, child: Text(p.name, style: const TextStyle(color: Colors.black87)));
                                 }).toList(),
-                                onChanged: (val) => setState(() => selectedRohanPersonId = val),
+                                onChanged: (val) => setState(() => selectedT1PersonId = val),
                               ),
                             ],
                           ),
@@ -188,16 +208,16 @@ class AdminView extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Team Saurabh Player:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                              Text('$t2Name Player:', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
                               const SizedBox(height: 8),
                               DropdownButtonFormField<String>(
-                                initialValue: selectedSaurabhPersonId,
+                                initialValue: selectedT2PersonId,
                                 isExpanded: true,
                                 decoration: const InputDecoration(border: OutlineInputBorder()),
-                                items: saurabhPlayers.map((p) {
+                                items: t2Players.map((p) {
                                   return DropdownMenuItem(value: p.id, child: Text(p.name, style: const TextStyle(color: Colors.black87)));
                                 }).toList(),
-                                onChanged: (val) => setState(() => selectedSaurabhPersonId = val),
+                                onChanged: (val) => setState(() => selectedT2PersonId = val),
                               ),
                             ],
                           ),
@@ -211,16 +231,16 @@ class AdminView extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Team Rohan Player:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                          Text('$t1Name Player:', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
-                            initialValue: selectedRohanPersonId,
+                            initialValue: selectedT1PersonId,
                             isExpanded: true,
                             decoration: const InputDecoration(border: OutlineInputBorder()),
-                            items: rohanPlayers.map((p) {
+                            items: t1Players.map((p) {
                               return DropdownMenuItem(value: p.id, child: Text(p.name, style: const TextStyle(color: Colors.black87)));
                             }).toList(),
-                            onChanged: (val) => setState(() => selectedRohanPersonId = val),
+                            onChanged: (val) => setState(() => selectedT1PersonId = val),
                           ),
                         ],
                       ),
@@ -231,16 +251,16 @@ class AdminView extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Team Saurabh Player:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
+                          Text('$t2Name Player:', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87)),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
-                            initialValue: selectedSaurabhPersonId,
+                            initialValue: selectedT2PersonId,
                             isExpanded: true,
                             decoration: const InputDecoration(border: OutlineInputBorder()),
-                            items: saurabhPlayers.map((p) {
+                            items: t2Players.map((p) {
                               return DropdownMenuItem(value: p.id, child: Text(p.name, style: const TextStyle(color: Colors.black87)));
                             }).toList(),
-                            onChanged: (val) => setState(() => selectedSaurabhPersonId = val),
+                            onChanged: (val) => setState(() => selectedT2PersonId = val),
                           ),
                         ],
                       ),
@@ -259,9 +279,9 @@ class AdminView extends StatelessWidget {
                   ),
                   icon: const Icon(Icons.sync_alt, color: Colors.white),
                   label: const Text('Execute Trade', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                  onPressed: (selectedRohanPersonId != null && selectedSaurabhPersonId != null)
+                  onPressed: (selectedT1PersonId != null && selectedT2PersonId != null)
                       ? () {
-                          service.processTrade(selectedRohanPersonId!, selectedSaurabhPersonId!);
+                          service.processTrade(selectedT1PersonId!, selectedT2PersonId!);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Trade executed successfully.')),
                           );

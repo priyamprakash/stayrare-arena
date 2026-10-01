@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/league.dart';
 import '../services/league_provider.dart';
 import '../services/league_service.dart';
+import 'setup_view.dart';
 
 class AuctionView extends StatefulWidget {
   const AuctionView({super.key});
@@ -186,6 +187,27 @@ class _AuctionViewState extends State<AuctionView> with TickerProviderStateMixin
     return Scaffold(
       appBar: AppBar(
         title: const Text('Auction Arena'),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 12),
+            child: ActionChip(
+              avatar: const Icon(Icons.workspace_premium_rounded, size: 16, color: Color(0xFFD97706)),
+              label: Text(
+                '${service.captain1Name} & ${service.captain2Name}',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF0D2A20)),
+              ),
+              backgroundColor: const Color(0xFFFEF3C7),
+              side: const BorderSide(color: Color(0xFFFDE68A)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (ctx) => const SetupView()),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -394,26 +416,30 @@ class _AuctionViewState extends State<AuctionView> with TickerProviderStateMixin
   }
 
   Widget _buildSpotlightSaleCard(BuildContext context, LeagueService service, Person person) {
-    final rohanMax = service.getMaxBidAllowed('team_rohan');
-    final saurabhMax = service.getMaxBidAllowed('team_saurabh');
+    if (service.teams.isEmpty) return const SizedBox.shrink();
+    final team1Id = service.teams[0].id;
+    final team2Id = service.teams[1].id;
+    
+    final t1Max = service.getMaxBidAllowed(team1Id);
+    final t2Max = service.getMaxBidAllowed(team2Id);
 
-    final rohanRtm = service.getRtmCardsLeft('team_rohan');
-    final saurabhRtm = service.getRtmCardsLeft('team_saurabh');
+    final t1Rtm = service.getRtmCardsLeft(team1Id);
+    final t2Rtm = service.getRtmCardsLeft(team2Id);
 
     final isMarquee = person.category == PlayerCategory.marquee;
 
-    final rohanNextPrice = getNextBidPrice(_currentPrice, _leadingTeamId);
-    final saurabhNextPrice = getNextBidPrice(_currentPrice, _leadingTeamId);
+    final t1NextPrice = getNextBidPrice(_currentPrice, _leadingTeamId);
+    final t2NextPrice = getNextBidPrice(_currentPrice, _leadingTeamId);
 
-    final isRohanLeading = _leadingTeamId == 'team_rohan';
-    final isSaurabhLeading = _leadingTeamId == 'team_saurabh';
+    final isT1Leading = _leadingTeamId == team1Id;
+    final isT2Leading = _leadingTeamId == team2Id;
 
-    final rohanCanBid = !isRohanLeading && (rohanMax >= rohanNextPrice);
-    final saurabhCanBid = !isSaurabhLeading && (saurabhMax >= saurabhNextPrice);
+    final t1CanBid = !isT1Leading && (t1Max >= t1NextPrice);
+    final t2CanBid = !isT2Leading && (t2Max >= t2NextPrice);
 
     final currentIncrement = getNextBidIncrement(_currentPrice);
 
-    final leadingTeamName = isRohanLeading ? 'Team Rohan' : (isSaurabhLeading ? 'Team Saurabh' : '');
+    final leadingTeamName = isT1Leading ? service.teams[0].name : (isT2Leading ? service.teams[1].name : '');
 
     return Container(
       decoration: BoxDecoration(
@@ -657,14 +683,14 @@ class _AuctionViewState extends State<AuctionView> with TickerProviderStateMixin
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                             decoration: BoxDecoration(
-                              color: isRohanLeading
+                              color: isT1Leading
                                   ? const Color(0xFFFEF3C7)
-                                  : (isSaurabhLeading ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9)),
+                                  : (isT2Leading ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9)),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: isRohanLeading
+                                color: isT1Leading
                                     ? const Color(0xFFF59E0B)
-                                    : (isSaurabhLeading ? const Color(0xFF10B981) : Colors.grey.shade300),
+                                    : (isT2Leading ? const Color(0xFF10B981) : Colors.grey.shade300),
                               ),
                             ),
                             child: Row(
@@ -673,21 +699,21 @@ class _AuctionViewState extends State<AuctionView> with TickerProviderStateMixin
                                 Icon(
                                   _leadingTeamId != null ? Icons.workspace_premium_rounded : Icons.pending_rounded,
                                   size: 14,
-                                  color: isRohanLeading
+                                  color: isT1Leading
                                       ? const Color(0xFFD97706)
-                                      : (isSaurabhLeading ? const Color(0xFF16A34A) : Colors.grey.shade600),
+                                      : (isT2Leading ? const Color(0xFF16A34A) : Colors.grey.shade600),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  isRohanLeading
-                                      ? '👑 TEAM ROHAN LEADING'
-                                      : (isSaurabhLeading ? '👑 TEAM SAURABH LEADING' : '⚡ AWAITING FIRST BID'),
+                                  isT1Leading
+                                      ? '👑 ${service.teams[0].name.toUpperCase()} LEADING'
+                                      : (isT2Leading ? '👑 ${service.teams[1].name.toUpperCase()} LEADING' : '⚡ AWAITING FIRST BID'),
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w900,
-                                    color: isRohanLeading
+                                    color: isT1Leading
                                         ? const Color(0xFFB45309)
-                                        : (isSaurabhLeading ? const Color(0xFF15803D) : const Color(0xFF475569)),
+                                        : (isT2Leading ? const Color(0xFF15803D) : const Color(0xFF475569)),
                                   ),
                                 ),
                               ],
@@ -711,63 +737,63 @@ class _AuctionViewState extends State<AuctionView> with TickerProviderStateMixin
                 ),
                 const SizedBox(height: 16),
 
-                // DUAL SIDE BIDDING ARENA (Rohan Left | Saurabh Right)
+                // DUAL SIDE BIDDING ARENA
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // TEAM ROHAN SIDE (LEFT)
+                    // TEAM 1 SIDE (LEFT)
                     Expanded(
                       child: _buildTeamBiddingSide(
                         context: context,
                         service: service,
-                        teamId: 'team_rohan',
-                        teamName: 'Team Rohan',
+                        teamId: team1Id,
+                        teamName: service.teams[0].name,
                         accentColor: const Color(0xFFF59E0B),
-                        maxAllowed: rohanMax,
+                        maxAllowed: t1Max,
                         currentPrice: _currentPrice,
-                        nextBidPrice: rohanNextPrice,
-                        isLeading: isRohanLeading,
-                        canBid: rohanCanBid,
-                        rtmLeft: rohanRtm,
+                        nextBidPrice: t1NextPrice,
+                        isLeading: isT1Leading,
+                        canBid: t1CanBid,
+                        rtmLeft: t1Rtm,
                         onBidPressed: () {
                           final isOpening = _leadingTeamId == null;
-                          _placeBid('team_rohan', rohanNextPrice, isOpening);
+                          _placeBid(team1Id, t1NextPrice, isOpening);
                         },
                         onSellPressed: () {
-                          _handleSell(context, service, person, 'team_rohan', _currentPrice);
+                          _handleSell(context, service, person, team1Id, _currentPrice);
                         },
                         onRtmPressed: () {
                           _cancelBiddingTimer();
-                          service.initiateRtmCheck('team_saurabh', _currentPrice, matchingTeamId: 'team_rohan');
+                          service.initiateRtmCheck(team2Id, _currentPrice, matchingTeamId: team1Id);
                         },
                       ),
                     ),
                     const SizedBox(width: 12),
 
-                    // TEAM SAURABH SIDE (RIGHT)
+                    // TEAM 2 SIDE (RIGHT)
                     Expanded(
                       child: _buildTeamBiddingSide(
                         context: context,
                         service: service,
-                        teamId: 'team_saurabh',
-                        teamName: 'Team Saurabh',
+                        teamId: team2Id,
+                        teamName: service.teams[1].name,
                         accentColor: const Color(0xFF10B981),
-                        maxAllowed: saurabhMax,
+                        maxAllowed: t2Max,
                         currentPrice: _currentPrice,
-                        nextBidPrice: saurabhNextPrice,
-                        isLeading: isSaurabhLeading,
-                        canBid: saurabhCanBid,
-                        rtmLeft: saurabhRtm,
+                        nextBidPrice: t2NextPrice,
+                        isLeading: isT2Leading,
+                        canBid: t2CanBid,
+                        rtmLeft: t2Rtm,
                         onBidPressed: () {
                           final isOpening = _leadingTeamId == null;
-                          _placeBid('team_saurabh', saurabhNextPrice, isOpening);
+                          _placeBid(team2Id, t2NextPrice, isOpening);
                         },
                         onSellPressed: () {
-                          _handleSell(context, service, person, 'team_saurabh', _currentPrice);
+                          _handleSell(context, service, person, team2Id, _currentPrice);
                         },
                         onRtmPressed: () {
                           _cancelBiddingTimer();
-                          service.initiateRtmCheck('team_rohan', _currentPrice, matchingTeamId: 'team_saurabh');
+                          service.initiateRtmCheck(team1Id, _currentPrice, matchingTeamId: team2Id);
                         },
                       ),
                     ),
@@ -1106,8 +1132,10 @@ class _SoldCelebrationDialogState extends State<_SoldCelebrationDialog> with Tic
 
   @override
   Widget build(BuildContext context) {
-    final isRohan = widget.team.id == 'team_rohan';
-    final teamColor = isRohan ? const Color(0xFFF59E0B) : const Color(0xFF10B981);
+    // Assuming team_1 is index 0 color and team_2 is index 1 color
+    // We could pass index, or use a heuristic, but typically:
+    final isTeam1 = widget.team.id.endsWith('1') || widget.team.id.contains('rohan') || widget.team.id.contains('avinash');
+    final teamColor = isTeam1 ? const Color(0xFFF59E0B) : const Color(0xFF10B981);
 
     return Dialog(
       backgroundColor: Colors.transparent,
