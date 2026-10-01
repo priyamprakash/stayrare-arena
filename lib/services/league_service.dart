@@ -43,7 +43,7 @@ class LeagueService extends ChangeNotifier {
   // Match settings
   int targetSquadSizePerSide = 10; // Default 10 per side, adjustable
 
-  // Captains & Team Names Configuration
+  // Captains & Team Names Configuration (Default: Saurabh & Avinash)
   String _captain1Name = 'Saurabh';
   String _captain2Name = 'Avinash';
   String? _customTeam1Name;
@@ -98,7 +98,7 @@ class LeagueService extends ChangeNotifier {
     // 2. Setup Teams & Prefill Player Pool
     resetAuction();
 
-    _logAudit('System', 'Initialization', 'Auction initialized with Captains $_captain1Name & $_captain2Name.');
+    _logAudit('System', 'Initialization', 'Auction initialized with Default Captains: $_captain1Name & $_captain2Name.');
   }
 
   void _prefillPlayerPool() {
@@ -165,46 +165,95 @@ class LeagueService extends ChangeNotifier {
     }
   }
 
-  // --- Setup & Captain Changer ---
+  // --- Setup & Captain Changer (Before, During, or After Auction) ---
 
   void initializeSetup(
     String cap1,
     String cap2, {
     String? customTeam1Name,
     String? customTeam2Name,
+    bool resetAuctionPool = true,
   }) {
-    _captain1Name = cap1;
-    _captain2Name = cap2;
-    _customTeam1Name = customTeam1Name;
-    _customTeam2Name = customTeam2Name;
-
-    resetAuction();
-    _logAudit('Admin', 'League Setup Initialized', 'Captains: $cap1 & $cap2. Teams: ${_customTeam1Name ?? "Team $cap1"} & ${_customTeam2Name ?? "Team $cap2"}.');
-    notifyListeners();
+    setCaptains(
+      cap1,
+      cap2,
+      team1Name: customTeam1Name,
+      team2Name: customTeam2Name,
+      resetPool: resetAuctionPool,
+    );
   }
 
-  void setCaptains(String cap1, String cap2, {String? team1Name, String? team2Name}) {
+  void setCaptains(
+    String cap1,
+    String cap2, {
+    String? team1Name,
+    String? team2Name,
+    bool resetPool = true,
+  }) {
+    if (resetPool || signings.isEmpty) {
+      _captain1Name = cap1;
+      _captain2Name = cap2;
+      _customTeam1Name = team1Name;
+      _customTeam2Name = team2Name;
+      resetAuction();
+      _logAudit('Admin', 'Captains Initialized', 'Captains set to $cap1 & $cap2. Teams: ${_customTeam1Name ?? "Team $cap1"} & ${_customTeam2Name ?? "Team $cap2"}.');
+      notifyListeners();
+      return;
+    }
+
+    // Mid/Post Auction Captain swap (preserves existing auction purchases):
+    final oldCap1 = _captain1Name;
+    final oldCap2 = _captain2Name;
     _captain1Name = cap1;
     _captain2Name = cap2;
-    _customTeam1Name = team1Name;
-    _customTeam2Name = team2Name;
+    if (team1Name != null) _customTeam1Name = team1Name;
+    if (team2Name != null) _customTeam2Name = team2Name;
 
-    resetAuction();
-    _logAudit('Admin', 'Captains Changed', 'Team Captains updated to $cap1 and $cap2.');
+    final cap1Id = cap1.toLowerCase().replaceAll(' ', '_');
+    final cap2Id = cap2.toLowerCase().replaceAll(' ', '_');
+
+    // Update team definitions
+    if (teams.isNotEmpty) {
+      teams[0] = TeamData(
+        id: teams[0].id,
+        name: _customTeam1Name?.isNotEmpty == true ? _customTeam1Name! : 'Team $cap1',
+        ownerPersonId: cap1Id,
+        ownerName: cap1,
+      );
+    }
+    if (teams.length > 1) {
+      teams[1] = TeamData(
+        id: teams[1].id,
+        name: _customTeam2Name?.isNotEmpty == true ? _customTeam2Name! : 'Team $cap2',
+        ownerPersonId: cap2Id,
+        ownerName: cap2,
+      );
+    }
+
+    // Ensure all 20 players are in `people`
+    for (final person in people) {
+      if (person.name.toLowerCase() == cap1.toLowerCase() || person.name.toLowerCase() == cap2.toLowerCase()) {
+        person.role = PersonRole.owner;
+        // If the new captain was previously bought as a normal player in auction, remove signing so team purse is freed
+        signings.removeWhere((s) => s.personId == person.id);
+      } else if (person.name.toLowerCase() == oldCap1.toLowerCase() || person.name.toLowerCase() == oldCap2.toLowerCase()) {
+        person.role = PersonRole.player;
+      }
+    }
+
+    _logAudit('Admin', 'Captains Swapped', 'Captains updated to $cap1 & $cap2 (Auction state preserved).');
     notifyListeners();
   }
 
   // --- Helper ID Resolvers ---
 
   String _resolveTeamId(String teamId) {
-    if (teams.isNotEmpty && teamId == teams[0].id) return teams[0].id;
-    if (teams.length > 1 && teamId == teams[1].id) return teams[1].id;
-    if (teamId == 'team_1' || teamId.contains('rohan') || (teamId.contains('avinash') && !teamId.contains('saurabh'))) {
-      return teams.isNotEmpty ? teams[0].id : 'team_1';
-    }
-    if (teamId == 'team_2' || teamId.contains('saurabh')) {
-      return teams.length > 1 ? teams[1].id : 'team_2';
-    }
+    if (teams.isNotEmpty && (teamId == teams[0].id || teamId == 'team_1')) return teams[0].id;
+    if (teams.length > 1 && (teamId == teams[1].id || teamId == 'team_2')) return teams[1].id;
+    if (teamId.contains('saurabh') && teams.isNotEmpty && teams[0].name.toLowerCase().contains('saurabh')) return teams[0].id;
+    if (teamId.contains('saurabh') && teams.length > 1 && teams[1].name.toLowerCase().contains('saurabh')) return teams[1].id;
+    if (teamId.contains('avinash') && teams.isNotEmpty && teams[0].name.toLowerCase().contains('avinash')) return teams[0].id;
+    if (teamId.contains('avinash') && teams.length > 1 && teams[1].name.toLowerCase().contains('avinash')) return teams[1].id;
     return teamId;
   }
 
@@ -272,10 +321,11 @@ class LeagueService extends ChangeNotifier {
   }
 
   int getRtmCardsLeft(String teamId) {
-    if (teams.isNotEmpty && teamId == teams[0].id) return team1RtmLeft;
-    if (teams.length > 1 && teamId == teams[1].id) return team2RtmLeft;
-    if (teamId == 'team_1' || teamId.contains('rohan')) return team1RtmLeft;
-    if (teamId == 'team_2' || teamId.contains('saurabh')) return team2RtmLeft;
+    final resolved = _resolveTeamId(teamId);
+    if (teams.isNotEmpty && resolved == teams[0].id) return team1RtmLeft;
+    if (teams.length > 1 && resolved == teams[1].id) return team2RtmLeft;
+    if (teamId == 'team_1') return team1RtmLeft;
+    if (teamId == 'team_2') return team2RtmLeft;
     return team1RtmLeft;
   }
 
@@ -345,7 +395,9 @@ class LeagueService extends ChangeNotifier {
     if (getMaxBidAllowed(teamId) < newFinalPrice) return;
     if (getRtmCardsLeft(teamId) <= 0) return;
 
-    if (teamId == 'team_1' || (teams.isNotEmpty && teamId == teams[0].id)) {
+    // Decrement RTM quota for matching team
+    final resolved = _resolveTeamId(teamId);
+    if (teams.isNotEmpty && resolved == teams[0].id) {
       team1RtmLeft--;
     } else {
       team2RtmLeft--;
@@ -372,7 +424,19 @@ class LeagueService extends ChangeNotifier {
   void declineRtmMatch(int newFinalPrice) {
     if (pendingRtmPerson == null || pendingRtmSourceTeamId.isEmpty) return;
 
-    // The opposing team declined, so the original bidding team gets the player at the final asked price
+    // Team B invoked RTM and now declines to match the raised asked price.
+    // The player goes to the original bidding team (Team A) at ₹Y.
+    // CRITICAL: Team B has EXHAUSTED their 1 RTM quota because they exercised/triggered RTM!
+    if (pendingRtmMatchingTeamId != null) {
+      final matchingTeamId = pendingRtmMatchingTeamId!;
+      final resolved = _resolveTeamId(matchingTeamId);
+      if (teams.isNotEmpty && resolved == teams[0].id) {
+        team1RtmLeft--;
+      } else {
+        team2RtmLeft--;
+      }
+    }
+
     final person = pendingRtmPerson!;
     final teamId = pendingRtmSourceTeamId;
 
@@ -390,7 +454,7 @@ class LeagueService extends ChangeNotifier {
     ));
 
     final teamName = _getTeamDisplayName(teamId);
-    _logAudit('Auction', 'Player Sold', '${person.name} sold to $teamName for ₹$newFinalPrice (RTM declined).');
+    _logAudit('Auction', 'Player Sold', '${person.name} sold to $teamName for ₹$newFinalPrice (RTM declined, RTM quota consumed).');
 
     pendingRtmPerson = null;
     notifyListeners();

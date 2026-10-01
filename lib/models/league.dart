@@ -29,7 +29,7 @@ extension PlayerCategoryExtension on PlayerCategory {
 class Person {
   final String id;
   final String name;
-  final PersonRole role;
+  PersonRole role;
   PlayerCategory category;
   PersonStatus status;
 

@@ -37,25 +37,45 @@ void main() {
       expect(poolPlayers.any((p) => p.name == 'Aditya'), isTrue);
     });
 
-    test('Changing captains and team names updates owners, team names, and returns former captains to pool', () {
-      // Switch captains to Priyam and Sangam with custom team names
-      service.setCaptains('Priyam', 'Sangam', team1Name: 'Super Strikers', team2Name: 'Mighty Warriors');
+    test('Changing captains before auction: Avinash replaced by Priyam -> Avinash goes to pool, Priyam becomes owner/captain', () {
+      // Replace Avinash with Priyam
+      service.setCaptains('Saurabh', 'Priyam');
 
-      expect(service.captain1Name, 'Priyam');
-      expect(service.captain2Name, 'Sangam');
-      expect(service.teams[0].name, 'Super Strikers');
-      expect(service.teams[1].name, 'Mighty Warriors');
+      expect(service.captain1Name, 'Saurabh');
+      expect(service.captain2Name, 'Priyam');
+      expect(service.teams[0].name, 'Team Saurabh');
+      expect(service.teams[1].name, 'Team Priyam');
 
       final owners = service.people.where((p) => p.role == PersonRole.owner).toList();
-      expect(owners.map((o) => o.name).toSet(), {'Priyam', 'Sangam'});
+      expect(owners.map((o) => o.name).toSet(), {'Saurabh', 'Priyam'});
 
-      // Saurabh and Avinash are now in the auction pool as players
+      // Avinash goes into the auction pool as a regular player
       final poolPlayers = service.people.where((p) => p.role == PersonRole.player).toList();
       expect(poolPlayers.length, 18);
-      expect(poolPlayers.any((p) => p.name == 'Saurabh'), isTrue);
       expect(poolPlayers.any((p) => p.name == 'Avinash'), isTrue);
       expect(poolPlayers.any((p) => p.name == 'Priyam'), isFalse);
-      expect(poolPlayers.any((p) => p.name == 'Sangam'), isFalse);
+    });
+
+    test('Changing captains after auction with resetPool=false preserves existing signings', () {
+      // 1. Sell a player in auction
+      final ricky = service.people.firstWhere((p) => p.name == 'Ritesh');
+      service.selectPlayerForAuction(ricky);
+      service.sellSelectedPlayer('team_1', 1200);
+
+      expect(service.signings.length, 1);
+      expect(service.getTeamSpend('team_1'), 1200);
+
+      // 2. Replace captain Avinash with Priyam after auction without resetting auction state
+      service.setCaptains('Saurabh', 'Priyam', resetPool: false);
+
+      expect(service.captain1Name, 'Saurabh');
+      expect(service.captain2Name, 'Priyam');
+      expect(service.teams[1].name, 'Team Priyam');
+      expect(service.teams[1].ownerName, 'Priyam');
+
+      // Existing signing is preserved
+      expect(service.signings.length, 1);
+      expect(service.getTeamSpend('team_1'), 1200);
     });
   });
 }

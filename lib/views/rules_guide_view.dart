@@ -83,11 +83,11 @@ class RulesGuideView extends StatelessWidget {
               title: '3. RTM (Right to Match) Cards',
               description:
                   '• What is RTM? Each team gets 1 RTM card for the entire auction.\n'
-                  '• Like LSG vs PBKS for Rishabh Pant: If Team A places the highest bid, Team B can trigger RTM.\n'
-                  '• Team A then gets one FINAL chance to increase their bid.\n'
-                  '• Team B is asked if they want to match this new final bid.\n'
-                  '• If matched, Team B wins the player at that final price. If declined, Team A gets the player.\n'
-                  '• Once used, a team\'s RTM card count becomes 0/1.',
+                  '• If Team A places the highest bid, Team B can trigger RTM.\n'
+                  '• Team A then gets one FINAL chance to increase their bid to ₹Y.\n'
+                  '• Team B is asked if they want to match this new final bid ₹Y.\n'
+                  '• If matched, Team B wins the player at ₹Y. If declined, Team A gets the player at ₹Y.\n'
+                  '• CRITICAL: Once a team triggers/exercises RTM, their 1 RTM card is EXHAUSTED (0/1 left), even if they ultimately decline to match at the final step.',
             ),
             const SizedBox(height: 14),
 
