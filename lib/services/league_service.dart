@@ -90,25 +90,26 @@ class LeagueService extends ChangeNotifier {
     final marqueeNames = {'sangam', 'avinash', 'sunny', 'priyam', 'rahul'};
 
     final poolNames = [
-      'Sunny',
-      'Priyam',
-      'Rahul',
-      'Sangam',
-      'Avinash',
-      'Aman',
       'Ritesh',
-      'Mohan',
-      'Niranjan',
-      'Ashutosh',
-      'Alok',
-      'Aashish',
+      'Avinash',
+      'Priyam',
+      'Saurabh',
+      'Sangam',
       'Satish',
-      'Shaurya',
-      'Mohit',
+      'Pawan',
+      'Niranjan',
+      'Aashish',
+      'Alok',
+      'Amit',
+      'Aman',
+      'Shubham',
       'Dev',
       'Tinku',
-      'Piyush',
-      'Ikschit',
+      'Sunny',
+      'Rahul',
+      'Ikchit',
+      'Mohan',
+      'Aditya'
     ];
 
     for (final name in poolNames) {
