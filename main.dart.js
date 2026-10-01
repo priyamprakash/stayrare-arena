@@ -90512,8 +90512,8 @@ h.c=h.b=1
 e.push(new A.dh(g,"Rohan",B.dE,B.cC,B.c0))
 e.push(new A.dh(f,"Saurabh",B.dE,B.cC,B.c0))
 s=A.c_(["sangam","avinash","sunny","priyam","rahul"],t.N)
-r=["Sunny","Priyam","Rahul","Sangam","Avinash","Aman","Ritesh","Mohan","Niranjan","Ashutosh","Alok","Aashish","Satish","Shaurya","Mohit","Dev","Tinku","Piyush","Ikschit"]
-for(q=h.z,p=h.x,o=t.S,n=t.N5,m=0;m<19;++m){l=r[m]
+r=["Ritesh","Avinash","Priyam","Saurabh","Sangam","Satish","Pawan","Niranjan","Aashish","Alok","Amit","Aman","Shubham","Dev","Tinku","Sunny","Rahul","Ikchit","Mohan","Aditya"]
+for(q=h.z,p=h.x,o=t.S,n=t.N5,m=0;m<20;++m){l=r[m]
 k=l.toLowerCase()
 e.push(new A.dh(k,l,B.ew,s.p(0,k)?B.cD:B.cC,B.fS))
 j=A.u(o,n)
