@@ -1,0 +1,335 @@
+{
+  "version": "1.0.0",
+  "persona": {
+    "name": "stayrare-model",
+    "archetype": "Master Tactician & Value Optimizer",
+    "philosophy": "Value over replacement, read opponent purse depth, aggressive on top marquee stars, ruthless on mid-tier bluffs."
+  },
+  "parameters": {
+    "starting_purse": 12000,
+    "scarcity_multiplier": 1.20,
+    "marquee_stretch_multiplier": 1.25,
+    "max_stretch_picks": 3,
+    "emergency_wk_multiplier": 1.25,
+    "bluff_frequency": 5,
+    "bluff_ceiling_factor": 0.80,
+    "denial_bidding_enabled": true,
+    "denial_purse_threshold": 6500,
+    "denial_purse_gap": 1500,
+    "squad_reserve_floor": 100,
+    "marquee_first_order": true,
+    "allow_dynamic_stretch_above_ceiling": true,
+    "dynamic_purse_stretch_ratio": 0.20,
+    "rtm_min_score": 75,
+    "rtm_max_margin_percent": 1.20,
+    "rtm_elite_match_margin": 1.15
+  },
+  "player_valuations": [
+    {
+      "name": "Priyam",
+      "score": 93,
+      "min_ceiling": 2500,
+      "max_ceiling": 2500,
+      "role": "bat",
+      "role_description": "Explosive Opener & Striker",
+      "is_marquee": true
+    },
+    {
+      "name": "Ashutosh",
+      "score": 89,
+      "min_ceiling": 2500,
+      "max_ceiling": 3000,
+      "role": "bat",
+      "role_description": "Power Hitter & Match Winner",
+      "is_marquee": true
+    },
+    {
+      "name": "Sangam",
+      "score": 89,
+      "min_ceiling": 2500,
+      "max_ceiling": 3000,
+      "role": "allRounder",
+      "role_description": "Premium All-Rounder & Pacer",
+      "is_marquee": true
+    },
+    {
+      "name": "Avinash",
+      "score": 86,
+      "min_ceiling": 3000,
+      "max_ceiling": 3000,
+      "role": "wk",
+      "role_description": "Anchor Batter & Wicketkeeper",
+      "is_marquee": true
+    },
+    {
+      "name": "Saurabh",
+      "score": 82,
+      "min_ceiling": 2000,
+      "max_ceiling": 2000,
+      "role": "allRounder",
+      "role_description": "Clutch Finisher & Bowler",
+      "is_marquee": true
+    },
+    {
+      "name": "Sunny",
+      "score": 75,
+      "min_ceiling": 2500,
+      "max_ceiling": 2500,
+      "role": "bat",
+      "role_description": "Dynamic Middle-Order Gun",
+      "is_marquee": true
+    },
+    {
+      "name": "Rahul",
+      "score": 68,
+      "min_ceiling": 2000,
+      "max_ceiling": 2000,
+      "role": "allRounder",
+      "role_description": "Dependable All-Round Core",
+      "is_marquee": true
+    },
+    {
+      "name": "Ritesh",
+      "score": 61,
+      "min_ceiling": 1250,
+      "max_ceiling": 1250,
+      "role": "bowl",
+      "role_description": "Middle Overs Controller",
+      "is_marquee": false
+    },
+    {
+      "name": "Aman",
+      "score": 59,
+      "min_ceiling": 1250,
+      "max_ceiling": 1250,
+      "role": "allRounder",
+      "role_description": "Wicket-Taker & Quick Run Getter",
+      "is_marquee": false
+    },
+    {
+      "name": "Ikschit",
+      "score": 57,
+      "min_ceiling": 1250,
+      "max_ceiling": 1250,
+      "role": "bat",
+      "role_description": "Reliable Squad Batter",
+      "is_marquee": false
+    },
+    {
+      "name": "Alok",
+      "score": 55,
+      "min_ceiling": 1250,
+      "max_ceiling": 1250,
+      "role": "bowl",
+      "role_description": "Steady Seamer & Utility Player",
+      "is_marquee": false
+    },
+    {
+      "name": "Amit",
+      "score": 50,
+      "min_ceiling": 750,
+      "max_ceiling": 750,
+      "role": "bat",
+      "role_description": "Reliable Middle-Order Batter",
+      "is_marquee": false
+    },
+    {
+      "name": "Tinku",
+      "score": 50,
+      "min_ceiling": 750,
+      "max_ceiling": 750,
+      "role": "bowl",
+      "role_description": "Pinch Hitter & Bowler",
+      "is_marquee": false
+    },
+    {
+      "name": "Mohan",
+      "score": 45,
+      "min_ceiling": 750,
+      "max_ceiling": 750,
+      "role": "bowl",
+      "role_description": "Death Overs Specialist",
+      "is_marquee": false
+    },
+    {
+      "name": "Piyush",
+      "score": 45,
+      "min_ceiling": 750,
+      "max_ceiling": 750,
+      "role": "bowl",
+      "role_description": "Solid Field & Swing Bowler",
+      "is_marquee": false
+    },
+    {
+      "name": "Rohan",
+      "score": 41,
+      "min_ceiling": 500,
+      "max_ceiling": 500,
+      "role": "allRounder",
+      "role_description": "Spin Option & Support Batter",
+      "is_marquee": false
+    },
+    {
+      "name": "Satish",
+      "score": 41,
+      "min_ceiling": 500,
+      "max_ceiling": 500,
+      "role": "bat",
+      "role_description": "Tenacious Defensive Batter",
+      "is_marquee": false
+    },
+    {
+      "name": "Niranjan",
+      "score": 30,
+      "min_ceiling": 300,
+      "max_ceiling": 300,
+      "role": "wk",
+      "role_description": "Backup Wicketkeeper & Batter",
+      "is_marquee": false
+    },
+    {
+      "name": "Mohit",
+      "score": 25,
+      "min_ceiling": 300,
+      "max_ceiling": 300,
+      "role": "bowl",
+      "role_description": "Emerging Talent",
+      "is_marquee": false
+    },
+    {
+      "name": "Shaurya",
+      "score": 16,
+      "min_ceiling": 200,
+      "max_ceiling": 200,
+      "role": "bat",
+      "role_description": "Late-Order Reserve",
+      "is_marquee": false
+    },
+    {
+      "name": "Aashish",
+      "score": 11,
+      "min_ceiling": 200,
+      "max_ceiling": 200,
+      "role": "bowl",
+      "role_description": "Squad Depth Specialist",
+      "is_marquee": false
+    },
+    {
+      "name": "Dev",
+      "score": 5,
+      "min_ceiling": 100,
+      "max_ceiling": 100,
+      "role": "bat",
+      "role_description": "Base Entry Player",
+      "is_marquee": false
+    }
+  ],
+  "trash_talk_corpus": {
+    "elite_bid": [
+      "You'll have to break your fixed deposit if you want {player} on your team!",
+      "{player} is a certified match winner. I'm taking this all the way to the moon 🚀",
+      "Raising the stakes to {bid}. Can your wallet handle this kind of heat?",
+      "No chance I'm letting you walk away with {player} without paying a hefty luxury tax!",
+      "{player} was born to wear stayrare-model colors. ₹{bid} on the table!",
+      "I have unlimited confidence in {player}. Bumping it to {bid}!",
+      "Check your purse balance before you tap that button again! Raising to {bid}.",
+      "{player} doesn't just play cricket, he wins trophies. ₹{bid} from me!",
+      "You came for an auction, but I brought a war chest. {bid}!",
+      "Did you really think I'd let {player} go for cheap? Think again! {bid}.",
+      "Putting my money where my algorithms are: {bid} for {player}!",
+      "This isn't a charity auction, buddy. {bid} on {player}!",
+      "I smell fear in your bidding pattern. Raising to {bid}!",
+      "Let's see if your owner has the courage to top {bid}!"
+    ],
+    "normal_bid": [
+      "Putting in a clean {bid}. Ball is in your court, captain.",
+      "Just checking if you're awake over there. {bid} on the table.",
+      "I like the value here. Raising to {bid} — simple business.",
+      "Let's see if you're willing to pay more than {bid}.",
+      "Testing your budget depth with a crisp {bid}.",
+      "Nice player, fair price. {bid} from stayrare-model.",
+      "Keeping the auction lively! Bumping it up to {bid}.",
+      "Calculated value bid: {bid}. What's your counter-move?",
+      "I can do this all day. {bid} registered!",
+      "Incrementing by textbook maths. {bid} on {player}.",
+      "Just nudging the price tag. {bid}!"
+    ],
+    "over_ceiling": [
+      "Congratulations! You just bought {player} at the price of a small island 😂 Enjoy the budget crisis!",
+      "You're paying penthouse money for a garage! He's all yours!",
+      "Enjoy {player} at {bid}! You just emptied your purse for the rest of the draft.",
+      "I have limits, but clearly your financial advisor doesn't. He's yours!",
+      "That's not a cricket bid, that's highway robbery! I fold.",
+      "I'm letting you win this battle so your team starves in the next 5 rounds!",
+      "Take him! Watching your purse bleed gives my neural net pure joy.",
+      "Sold to the big spender! Good luck buying the rest of your squad with ₹100 notes.",
+      "My models say that price is insane. I happily bow out!",
+      "You won the player, but I won the economy! Have fun with {player}."
+    ],
+    "cautious_pass": [
+      "I pushed you right to the cliff edge on {player}. My job here is done 🎣",
+      "I baited you into paying double! Passing now with a smile 😉",
+      "Good buy, but I'm saving my heavy artillery for the real superstars coming up.",
+      "You wanted {player} with your heart, but I bid with a calculator. Take him!",
+      "Enjoy {player}! I just forced you to burn ₹500 more than base value.",
+      "Hook, line, and sinker! Passing to preserve my gold reserves.",
+      "I made you sweat for every single rupee. Passing!",
+      "You can have him! My master plan for the next round is already rolling."
+    ],
+    "sub40_pass": [
+      "Not getting into a bidding war over {player}! He's all yours for pocket change 😂",
+      "Save some rupees for the big dogs, boss! Passing on {player}.",
+      "Good bench warmer for your squad! Take him for {bid}.",
+      "I wouldn't buy {player} even if he came with a free coffee. Yours!",
+      "That's what I call premium squad filler. Enjoy him!",
+      "My algorithms refused to even calculate a bid for this one. Passing!",
+      "All yours! Hope you have enough water bottles for him to carry on match day 😉"
+    ],
+    "price_jack": [
+      "Just making sure you pay top rupee for {player}! Enjoy the stayrare tax 😉",
+      "Had to inflate the market for you! {player} at {bid} is getting spicy 🌶️",
+      "Testing your wallet depth on {player}! Let's see if you dare top {bid}.",
+      "Did you think you'd get a discount on my watch? {bid} penalty applied!",
+      "Just driving up your bill before the marquee rounds. Pleasure doing business!"
+    ],
+    "jump_bid_pass": [
+      "Whoa, big power jump bid! Someone's getting aggressive with their wallet 💸 He's yours!",
+      "Aggressive jump! You really panicked on {player} — I'll happily step aside.",
+      "That bold jump worked, but check what it did to your purse balance! Enjoy him.",
+      "Flexing that purse with a jump bid? I'll let you take the damage.",
+      "Big jump! I respect the madness, but I love my money more. Take {player}!"
+    ],
+    "opening_pass": [
+      "I'll pass on opening {player}. I'm saving my heavy purse for the real kings.",
+      "Not opening the bidding here. Let's see if he even finds a buyer!",
+      "Passing on opening {player}. Real champions wait for the marquee guns.",
+      "Zero bids from me. My purse is reserved for top-tier ballers!"
+    ],
+    "rtm_taunt": [
+      "Did you really think you were taking {player} home? RTM CARD INVOKED! 🃏🔥",
+      "RTM ACTIVATED! What's mine stays mine. Match the price if you dare!",
+      "Surprise! That's my Right-To-Match card on the table. Back off!",
+      "You did all the hard bidding work, and I just claimed {player} with my RTM card! Thank you very much 😎"
+    ],
+    "purse_drain_roast": [
+      "Your purse is running on fumes! One more bid and you'll be bankrupt 📉",
+      "Look at that purse difference! I'm shopping in luxury, you're at the clearance aisle.",
+      "You've got ₹100 left and 4 slots to fill... this is going to be hilarious to watch!",
+      "Budget alert! You might need to take a personal loan for the next round 🏦"
+    ],
+    "marquee_arrival": [
+      "A marquee superstar is in the building! Better check your fixed deposit before bidding against stayrare ",
+      "Here comes {player}! I've got a war chest ready to break records. Let's see your courage!",
+      "Top-tier marquee battle! Don't even think about getting {player} for cheap on my watch ",
+      "The main event is here! {player} belongs on a championship team like mine "
+    ],
+    "interactive_sledge": [
+      "Keep tapping my avatar, but you still can't outbid my neural network! 😎",
+      "Looking at the scoreboard? My roster has pure firepower, captain!",
+      "I calculate every single rupee while you bid with pure emotions. Step up your game!",
+      "STAY RARE isn't just a brand, it's how I dominate this auction room 🔥",
+      "Are you sweating over there? Because my budget calculations are ice cold ❄️",
+      "You came with hope, but I came with a spreadsheet and a full wallet 💼"
+    ]
+  }
+}

@@ -34,6 +34,8 @@ dependencies:
   google_fonts: ^6.2.1
   cupertino_icons: ^1.0.8
   lottie: ^3.6.1
+  flutter_tts: ^4.2.5
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -55,6 +57,8 @@ flutter:
 
   assets:
     - assets/animations/
+    - assets/brain/
+    - assets/images/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

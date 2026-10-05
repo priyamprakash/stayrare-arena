@@ -4,6 +4,7 @@ import '../services/league_provider.dart';
 import '../services/league_service.dart';
 import 'rules_guide_view.dart';
 import 'setup_view.dart';
+import 'solo_ai_auction_view.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
@@ -89,6 +90,25 @@ class HomeView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ==========================================
+            // SEPARATE SECTION: PLAY WITH STAYRARE-MODEL
+            // ==========================================
+            _buildStayrareModelHeroCard(context),
+            const SizedBox(height: 20),
+
+            // Section Header: Official League
+            const Row(
+              children: [
+                Icon(Icons.workspace_premium_rounded, size: 18, color: Color(0xFF0D2A20)),
+                SizedBox(width: 8),
+                Text(
+                  'Official League Tournament',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF0F172A), letterSpacing: -0.3),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
             // Hero Stadium Banner
             Container(
               padding: const EdgeInsets.all(20),
@@ -101,7 +121,7 @@ class HomeView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0D2A20).withOpacity(0.3),
+                    color: const Color(0xFF0D2A20).withValues(alpha: 0.3),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -157,7 +177,7 @@ class HomeView extends StatelessWidget {
                 border: Border.all(color: Colors.grey.shade200),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -217,7 +237,7 @@ class HomeView extends StatelessWidget {
             LayoutBuilder(
               builder: (context, constraints) {
                 if (service.teams.isEmpty) return const SizedBox.shrink();
-                
+
                 final team1Id = service.teams[0].id;
                 final team2Id = service.teams[1].id;
 
@@ -242,6 +262,403 @@ class HomeView extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // PLAY WITH STAYRARE-MODEL SECTION CARD
+  // ==========================================
+
+  Widget _buildStayrareModelHeroCard(BuildContext context) {
+    return Container(
+      height: 145,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFF091611),
+            Color(0xFF0F2D22),
+            Color(0xFF163E30),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0D2A20).withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          children: [
+            // Background ambient glow behind character
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 130,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFFDC2626).withValues(alpha: 0.25),
+                      const Color(0xFFF59E0B).withValues(alpha: 0.10),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Background subtle sports icon watermark
+            Positioned(
+              right: 95,
+              bottom: -15,
+              child: Icon(
+                Icons.sports_cricket_rounded,
+                size: 80,
+                color: Colors.white.withValues(alpha: 0.03),
+              ),
+            ),
+
+            // Main Content Row
+            Row(
+              children: [
+                // Left Column: Details & Actions
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 6, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Top Badges
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.bolt_rounded, color: Colors.black87, size: 11),
+                                  SizedBox(width: 2),
+                                  Text(
+                                    '1v1 ARENA',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.black87,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.record_voice_over_rounded, size: 10, color: Color(0xFF34D399)),
+                                  SizedBox(width: 3),
+                                  Text(
+                                    'Live Sledge',
+                                    style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: Colors.white70),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // Title & Info
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Play vs stayrare-model',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: -0.3,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '₹12k Purse • Soft Ceilings • 1 RTM • Live Trash Talk',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey.shade300,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // Action Buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFF59E0B),
+                                  foregroundColor: Colors.black87,
+                                  padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 8),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  elevation: 2,
+                                  minimumSize: const Size(0, 32),
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (ctx) => const SoloAiAuctionView()),
+                                  );
+                                },
+                                child: const FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    'Battle AI →',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 11.5,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Material(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(10),
+                                onTap: () => _showValuationsModal(context),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(7.0),
+                                  child: Icon(Icons.table_chart_rounded, color: Colors.white, size: 16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Right Column: Hero Mascot Artwork
+                SizedBox(
+                  width: 115,
+                  child: Stack(
+                    alignment: Alignment.bottomCenter,
+                    children: [
+                      Positioned(
+                        top: 6,
+                        bottom: 12,
+                        child: Image.asset(
+                          'assets/images/stayrare_owner.png',
+                          fit: BoxFit.contain,
+                          alignment: Alignment.bottomCenter,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.smart_toy_rounded,
+                            color: Color(0xFFF59E0B),
+                            size: 48,
+                          ),
+                        ),
+                      ),
+                      // Soft bottom vignette for seamless blend
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        height: 24,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                const Color(0xFF163E30).withValues(alpha: 0.95),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Hero Character Tag
+                      Positioned(
+                        bottom: 4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDC2626),
+                            borderRadius: BorderRadius.circular(6),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFDC2626).withValues(alpha: 0.5),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.whatshot_rounded, color: Colors.white, size: 9),
+                              SizedBox(width: 2),
+                              Text(
+                                'AI RIVAL',
+                                style: TextStyle(
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 0.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showValuationsModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.75,
+        maxChildSize: 0.9,
+        builder: (_, scrollController) => Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('1v1 Match Regulations', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
+                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text('Rules and mechanics for the 1v1 stayrare-model solo arena:', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  children: [
+                    _buildHomeRuleTile(
+                      icon: Icons.account_balance_wallet_rounded,
+                      title: '₹10,000 Starting Purse',
+                      desc: 'Both teams start with ₹10,000. Balance your spending between marquee stars and squad depth.',
+                    ),
+                    _buildHomeRuleTile(
+                      icon: Icons.groups_rounded,
+                      title: 'Squad Composition Quotas',
+                      desc: 'Teams must build 9-11 player squads with minimum 1 WK, 3 BAT, 3 BOWL, and 2 All-Rounders.',
+                    ),
+                    _buildHomeRuleTile(
+                      icon: Icons.style_rounded,
+                      title: '1 RTM (Right-To-Match) Card',
+                      desc: 'Match your opponent’s winning bid. Opponents can raise to any multiple of ₹50 before final match.',
+                    ),
+                    _buildHomeRuleTile(
+                      icon: Icons.pause_circle_filled_rounded,
+                      title: '1 Strategic Timeout (30 Seconds)',
+                      desc: 'Freeze the bidding clock once per match to review squad roles, analyze purse math, and adjust tactics.',
+                    ),
+                    _buildHomeRuleTile(
+                      icon: Icons.bolt_rounded,
+                      title: 'Round 2 Accelerated Phase',
+                      desc: 'Unsold players return in an accelerated round with a 40% discount on base prices.',
+                    ),
+                    _buildHomeRuleTile(
+                      icon: Icons.trending_up_rounded,
+                      title: 'Graduated IPL Bid Increments',
+                      desc: '• Below ₹1,000: +₹100\n• ₹1,000 – ₹2,500: +₹250\n• Above ₹2,500: +₹500',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeRuleTile({required IconData icon, required String title, required String desc}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D2A20),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: const Color(0xFFF59E0B), size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A))),
+                const SizedBox(height: 4),
+                Text(desc, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.3)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -297,7 +714,7 @@ class HomeView extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -326,13 +743,13 @@ class HomeView extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 1.5),
                       ),
                       child: Center(
                         child: Text(
-                          team.name[5], // 'R' or 'S'
+                          team.name.isNotEmpty ? team.name[0] : 'T',
                           style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
                         ),
                       ),
@@ -365,7 +782,7 @@ class HomeView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
+                            color: Colors.black.withValues(alpha: 0.15),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -511,7 +928,7 @@ class HomeView extends StatelessWidget {
                 trailing: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: startGradient.withOpacity(0.08),
+                    color: startGradient.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

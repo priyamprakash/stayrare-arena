@@ -1610,7 +1610,7 @@ class _RtmSpotlightCardState extends State<_RtmSpotlightCard> {
                           onPressed: _increasedPrice > basePrice
                               ? () {
                                   setState(() {
-                                    _increasedPrice -= 100;
+                                    _increasedPrice -= 50;
                                     if (_increasedPrice < basePrice) _increasedPrice = basePrice;
                                   });
                                 }
@@ -1633,15 +1633,54 @@ class _RtmSpotlightCardState extends State<_RtmSpotlightCard> {
                         IconButton.filledTonal(
                           style: IconButton.styleFrom(backgroundColor: const Color(0xFFFEF3C7)),
                           icon: const Icon(Icons.add_rounded, color: Colors.black87),
-                          onPressed: _increasedPrice + 100 <= sellingTeamMax
+                          onPressed: _increasedPrice + 50 <= sellingTeamMax
                               ? () {
                                   setState(() {
-                                    _increasedPrice += 100;
+                                    _increasedPrice += 50;
                                   });
                                 }
                               : null,
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          ChoiceChip(
+                            label: Text('₹$basePrice (No Raise)', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                            selected: _increasedPrice == basePrice,
+                            selectedColor: const Color(0xFF0D2A20),
+                            labelStyle: TextStyle(color: _increasedPrice == basePrice ? Colors.white : Colors.black87),
+                            onSelected: (_) => setState(() => _increasedPrice = basePrice),
+                          ),
+                          const SizedBox(width: 6),
+                          if (basePrice + 50 <= sellingTeamMax)
+                            ActionChip(
+                              label: Text('+₹50', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                              onPressed: () => setState(() => _increasedPrice = basePrice + 50),
+                            ),
+                          const SizedBox(width: 6),
+                          if (basePrice + 100 <= sellingTeamMax)
+                            ActionChip(
+                              label: Text('+₹100', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                              onPressed: () => setState(() => _increasedPrice = basePrice + 100),
+                            ),
+                          const SizedBox(width: 6),
+                          if (basePrice + 250 <= sellingTeamMax)
+                            ActionChip(
+                              label: Text('+₹250', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                              onPressed: () => setState(() => _increasedPrice = basePrice + 250),
+                            ),
+                          const SizedBox(width: 6),
+                          if (basePrice + 500 <= sellingTeamMax)
+                            ActionChip(
+                              label: Text('+₹500', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                              onPressed: () => setState(() => _increasedPrice = basePrice + 500),
+                            ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

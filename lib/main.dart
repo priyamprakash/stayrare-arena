@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/league_provider.dart';
 import 'services/league_service.dart';
+import 'services/ai_brain_loader.dart';
 import 'views/admin_view.dart';
 import 'views/auction_view.dart';
 import 'views/home_view.dart';
@@ -9,7 +10,9 @@ import 'views/match_day_view.dart';
 import 'views/player_pool_view.dart';
 import 'views/rules_guide_view.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await AiBrainService().loadBrainFromFile();
   runApp(const CricketLeagueApp());
 }
 
@@ -117,7 +120,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 16,
               offset: const Offset(0, -4),
             ),
@@ -127,7 +130,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           selectedIndex: _currentIndex,
           backgroundColor: Colors.white,
           elevation: 0,
-          indicatorColor: const Color(0xFF0D2A20).withOpacity(0.12),
+          indicatorColor: const Color(0xFF0D2A20).withValues(alpha: 0.12),
           onDestinationSelected: (index) {
             setState(() => _currentIndex = index);
           },

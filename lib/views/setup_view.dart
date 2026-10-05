@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/league.dart';
 import '../services/league_provider.dart';
 import '../services/league_service.dart';
 
@@ -159,7 +158,7 @@ class _SetupViewState extends State<SetupView> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF0D2A20).withOpacity(0.25),
+                    color: const Color(0xFF0D2A20).withValues(alpha: 0.25),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -170,7 +169,7 @@ class _SetupViewState extends State<SetupView> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF59E0B).withOpacity(0.2),
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.stars_rounded, color: Color(0xFFF59E0B), size: 30),

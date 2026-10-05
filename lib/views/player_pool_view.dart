@@ -65,7 +65,7 @@ class _PlayerPoolViewState extends State<PlayerPoolView> {
                     child: ChoiceChip(
                       label: Text(filter, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
                       selected: _selectedFilter == filter,
-                      selectedColor: const Color(0xFF0D2A20).withOpacity(0.18),
+                      selectedColor: const Color(0xFF0D2A20).withValues(alpha: 0.18),
                       onSelected: (selected) {
                         if (selected) {
                           setState(() => _selectedFilter = filter);
@@ -148,7 +148,7 @@ class _PlayerPoolViewState extends State<PlayerPoolView> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                                 decoration: BoxDecoration(
-                                  color: _getStatusColor(person.status).withOpacity(0.12),
+                                  color: _getStatusColor(person.status).withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -196,7 +196,7 @@ class _PlayerPoolViewState extends State<PlayerPoolView> {
 class _LateJoinerDialog extends StatefulWidget {
   final LeagueService service;
 
-  const _LateJoinerDialog({super.key, required this.service});
+  const _LateJoinerDialog({required this.service});
 
   @override
   State<_LateJoinerDialog> createState() => _LateJoinerDialogState();
@@ -243,7 +243,7 @@ class _LateJoinerDialogState extends State<_LateJoinerDialog> {
                 return ChoiceChip(
                   label: Text('${cat.label} (Base ₹${cat.basePrice})', style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
                   selected: selectedCategory == cat,
-                  selectedColor: const Color(0xFF0D2A20).withOpacity(0.2),
+                  selectedColor: const Color(0xFF0D2A20).withValues(alpha: 0.2),
                   onSelected: (val) {
                     if (val) setState(() => selectedCategory = cat);
                   },
