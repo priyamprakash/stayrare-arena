@@ -3136,189 +3136,7 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.75,
-        maxChildSize: 0.9,
-        builder: (_, scrollController) => Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Tournament Regulations & Rules', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text('Official rules governing the 1v1 stayrare-model auction arena:', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  children: [
-                    _buildRegulationTile(
-                      icon: Icons.account_balance_wallet_rounded,
-                      title: '₹10,000 Budget Purse',
-                      desc: 'Both you and the AI start with ₹10,000. You must budget carefully to fill your required squad spots.',
-                    ),
-                    _buildRegulationTile(
-                      icon: Icons.groups_rounded,
-                      title: 'Squad Mandates (9-11 Players)',
-                      desc: 'Eligible squads must contain at least 1 Wicketkeeper (WK), 3 Batsmen (BAT), 3 Bowlers (BOWL), and 2 All-Rounders (AR).',
-                    ),
-                    _buildRegulationTile(
-                      icon: Icons.style_rounded,
-                      title: '1 RTM (Right-To-Match) Card',
-                      desc: 'When an opponent wins a player, you can exercise your RTM card. The opponent can raise the price to any multiple of ₹50, and you decide whether to match.',
-                    ),
-                    _buildRegulationTile(
-                      icon: Icons.pause_circle_filled_rounded,
-                      title: '1 Strategic Timeout (30 Seconds)',
-                      desc: 'Each team has 1 timeout per match to freeze the clock, review opponent purse math, and plan role targets.',
-                    ),
-                    _buildRegulationTile(
-                      icon: Icons.bolt_rounded,
-                      title: 'Round 2 Accelerated Phase',
-                      desc: 'Unsold players return in Round 2 with a 40% base price discount and a faster 25s countdown clock.',
-                    ),
-                    _buildRegulationTile(
-                      icon: Icons.trending_up_rounded,
-                      title: 'Dynamic Bid Increments',
-                      desc: '• Below ₹1,000: +₹100 per bid\n• ₹1,000 to ₹2,500: +₹250 per bid\n• Above ₹2,500: +₹500 per bid',
-                    ),
-                    const SizedBox(height: 12),
-                    // Live Audio Settings Card
-                    StatefulBuilder(
-                      builder: (context, setSheetState) {
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.white12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Row(
-                                children: [
-                                  Icon(Icons.spatial_audio_off_rounded, color: Color(0xFFF59E0B), size: 18),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Live Voice & Sledge Audio Settings',
-                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              SwitchListTile.adaptive(
-                                contentPadding: EdgeInsets.zero,
-                                activeTrackColor: const Color(0xFF10B981),
-                                title: const Text('Official Auctioneer Voice', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
-                                subtitle: const Text('Live bid calls, timer gavels, and player introductions', style: TextStyle(color: Colors.white60, fontSize: 10)),
-                                value: _session.voiceService.isEnabled,
-                                onChanged: (val) {
-                                  _session.voiceService.toggleVoice();
-                                  setSheetState(() {});
-                                },
-                              ),
-                              const Divider(color: Colors.white12, height: 1),
-                              SwitchListTile.adaptive(
-                                contentPadding: EdgeInsets.zero,
-                                activeTrackColor: const Color(0xFF38BDF8),
-                                title: const Text('Auction Room Sound FX', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
-                                subtitle: const Text('Wooden gavel knocks, countdown heartbeat, crowd gasps & paddle clicks', style: TextStyle(color: Colors.white60, fontSize: 10)),
-                                value: _session.sfxService.isSfxEnabled,
-                                onChanged: (val) {
-                                  _session.sfxService.toggleSfx();
-                                  setSheetState(() {});
-                                },
-                              ),
-                              const SizedBox(height: 10),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Color(0xFF38BDF8)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                    ),
-                                    icon: const Icon(Icons.gavel_rounded, color: Color(0xFF38BDF8), size: 14),
-                                    label: const Text('🔨 Test Gavel', style: TextStyle(color: Color(0xFF38BDF8), fontSize: 11, fontWeight: FontWeight.w800)),
-                                    onPressed: () => _session.sfxService.playHammerDown(),
-                                  ),
-                                  OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Color(0xFFEF4444)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                    ),
-                                    icon: const Icon(Icons.favorite_rounded, color: Color(0xFFEF4444), size: 14),
-                                    label: const Text('💓 Test Heartbeat', style: TextStyle(color: Color(0xFFEF4444), fontSize: 11, fontWeight: FontWeight.w800)),
-                                    onPressed: () => _session.sfxService.playCountdownTick(secondsRemaining: 3),
-                                  ),
-                                  OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Color(0xFFF59E0B)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                    ),
-                                    icon: const Icon(Icons.volume_up_rounded, color: Color(0xFFF59E0B), size: 14),
-                                    label: const Text('🎙️ Test Dual Voice', style: TextStyle(color: Color(0xFFF59E0B), fontSize: 11, fontWeight: FontWeight.w800)),
-                                    onPressed: () => _session.voiceService.testSpeech(),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRegulationTile({required IconData icon, required String title, required String desc}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0D2A20),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: const Color(0xFFF59E0B), size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A))),
-                const SizedBox(height: 4),
-                Text(desc, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.3)),
-              ],
-            ),
-          ),
-        ],
-      ),
+      builder: (ctx) => _SoloValuationsSheetContent(session: _session),
     );
   }
 
@@ -4547,6 +4365,446 @@ class _StayrareOwnerAvatarState extends State<_StayrareOwnerAvatar> with SingleT
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _SoloValuationsSheetContent extends StatefulWidget {
+  final SoloAiAuctionSession session;
+  const _SoloValuationsSheetContent({required this.session});
+
+  @override
+  State<_SoloValuationsSheetContent> createState() => _SoloValuationsSheetContentState();
+}
+
+class _SoloValuationsSheetContentState extends State<_SoloValuationsSheetContent> {
+  int _selectedTab = 0; // 0: Valuations & Ranks, 1: Regulations & Audio
+  String _roleFilter = 'All';
+
+  @override
+  Widget build(BuildContext context) {
+    final rankedList = widget.session.learnerService.rankedPlayers;
+    final totalLearned = widget.session.learnerService.totalAuctionsLearned;
+
+    List<PlayerValuation> filteredPlayers = rankedList;
+    if (_roleFilter == 'BAT') {
+      filteredPlayers = rankedList.where((p) => p.role == CricketRole.bat).toList();
+    } else if (_roleFilter == 'BOWL') {
+      filteredPlayers = rankedList.where((p) => p.role == CricketRole.bowl).toList();
+    } else if (_roleFilter == 'AR') {
+      filteredPlayers = rankedList.where((p) => p.role == CricketRole.allRounder).toList();
+    } else if (_roleFilter == 'Top 7') {
+      filteredPlayers = rankedList.where((p) => p.adjustedRank <= 7).toList();
+    }
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.82,
+      maxChildSize: 0.94,
+      builder: (_, scrollController) => Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.analytics_rounded, color: Color(0xFFD97706), size: 22),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          totalLearned > 0
+                              ? 'LEARNED FROM $totalLearned AUCTIONS'
+                              : 'COLD-START BASELINE (AUCTION #1)',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: totalLearned > 0 ? const Color(0xFF059669) : const Color(0xFF64748B),
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const Text(
+                          'Player Valuations & Ranks',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Tab Selector Row
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.all(3),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedTab = 0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _selectedTab == 0 ? Colors.white : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: _selectedTab == 0
+                              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 2))]
+                              : null,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Market Ranks (${rankedList.length})',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: _selectedTab == 0 ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedTab = 1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _selectedTab == 1 ? Colors.white : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: _selectedTab == 1
+                              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 2))]
+                              : null,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Rules & Audio',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: _selectedTab == 1 ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Tab 0: Player Valuations & Dynamic Market Rankings
+            if (_selectedTab == 0) ...[
+              // Role Filter Chips
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: ['All', 'Top 7', 'BAT', 'BOWL', 'AR'].map((role) {
+                    final isSel = _roleFilter == role;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        label: Text(role, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: isSel ? Colors.white : const Color(0xFF334155))),
+                        selected: isSel,
+                        selectedColor: const Color(0xFF0D2A20),
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        onSelected: (val) {
+                          if (val) setState(() => _roleFilter = role);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Players List
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollController,
+                  itemCount: filteredPlayers.length,
+                  separatorBuilder: (_, _) => const Divider(height: 10, color: Color(0xFFF1F5F9)),
+                  itemBuilder: (ctx, idx) {
+                    final p = filteredPlayers[idx];
+                    final isTop3 = p.adjustedRank <= 3;
+                    final rankColor = p.adjustedRank == 1
+                        ? const Color(0xFFD97706)
+                        : (p.adjustedRank == 2 ? const Color(0xFF64748B) : (p.adjustedRank == 3 ? const Color(0xFFB45309) : const Color(0xFF0F172A)));
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                      child: Row(
+                        children: [
+                          // Rank Badge
+                          Container(
+                            width: 32,
+                            height: 32,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isTop3 ? rankColor.withValues(alpha: 0.15) : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                              border: isTop3 ? Border.all(color: rankColor.withValues(alpha: 0.4), width: 1.5) : null,
+                            ),
+                            child: Text(
+                              '#${p.adjustedRank}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                color: isTop3 ? rankColor : const Color(0xFF0F172A),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+
+                          // Name & Role
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      p.name,
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF0D2A20).withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      child: Text(
+                                        '${p.role.icon} ${p.role.shortCode}',
+                                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF0D2A20)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Skill: ${p.score} • Auction Score: ${p.auctionScore} • Avg: ₹${p.historicalAvgPrice}',
+                                  style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Composite Score & Tier Badge
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: p.compositeScore >= 70 ? const Color(0xFFFEF3C7) : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  p.tierBadge,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    color: p.compositeScore >= 70 ? const Color(0xFFD97706) : const Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Score: ${p.compositeScore}/100',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ] else ...[
+              // Tab 1: Match Regulations & Audio
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  children: [
+                    _buildSoloRegulationTile(
+                      icon: Icons.account_balance_wallet_rounded,
+                      title: '₹12,000 Budget Purse',
+                      desc: 'Both you and the AI start with ₹12,000 for a 10-player squad. Target budget is ₹1,200 per slot.',
+                    ),
+                    _buildSoloRegulationTile(
+                      icon: Icons.groups_rounded,
+                      title: 'Squad Mandates (10 Players)',
+                      desc: 'Eligible squads must contain 10 players: max 5 pure batsmen, min 5 bowling options (Bowlers + All-Rounders).',
+                    ),
+                    _buildSoloRegulationTile(
+                      icon: Icons.style_rounded,
+                      title: '1 RTM (Right-To-Match) Card',
+                      desc: 'When an opponent wins a player, you can exercise your RTM card. The opponent can raise the price to any multiple of ₹50, and you decide whether to match.',
+                    ),
+                    _buildSoloRegulationTile(
+                      icon: Icons.pause_circle_filled_rounded,
+                      title: '1 Strategic Timeout (30 Seconds)',
+                      desc: 'Each team has 1 timeout per match to freeze the clock, review opponent purse math, and plan role targets.',
+                    ),
+                    _buildSoloRegulationTile(
+                      icon: Icons.bolt_rounded,
+                      title: 'Round 2 Accelerated Phase',
+                      desc: 'Unsold players return in Round 2 with a 40% base price discount and a faster 25s countdown clock.',
+                    ),
+                    _buildSoloRegulationTile(
+                      icon: Icons.trending_up_rounded,
+                      title: 'Dynamic Bid Increments',
+                      desc: '• Below ₹1,000: +₹100 per bid\n• ₹1,000 to ₹2,500: +₹250 per bid\n• Above ₹2,500: +₹500 per bid',
+                    ),
+                    const SizedBox(height: 12),
+                    // Live Audio Settings Card
+                    StatefulBuilder(
+                      builder: (context, setSheetState) {
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Row(
+                                children: [
+                                  Icon(Icons.spatial_audio_off_rounded, color: Color(0xFFF59E0B), size: 18),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Live Voice & Sledge Audio Settings',
+                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              SwitchListTile.adaptive(
+                                contentPadding: EdgeInsets.zero,
+                                activeTrackColor: const Color(0xFF10B981),
+                                title: const Text('Official Auctioneer Voice', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                                subtitle: const Text('Live bid calls, timer gavels, and player introductions', style: TextStyle(color: Colors.white60, fontSize: 10)),
+                                value: widget.session.voiceService.isEnabled,
+                                onChanged: (val) {
+                                  widget.session.voiceService.toggleVoice();
+                                  setSheetState(() {});
+                                },
+                              ),
+                              const Divider(color: Colors.white12, height: 1),
+                              SwitchListTile.adaptive(
+                                contentPadding: EdgeInsets.zero,
+                                activeTrackColor: const Color(0xFF38BDF8),
+                                title: const Text('Auction Room Sound FX', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                                subtitle: const Text('Wooden gavel knocks, countdown heartbeat, crowd gasps & paddle clicks', style: TextStyle(color: Colors.white60, fontSize: 10)),
+                                value: widget.session.sfxService.isSfxEnabled,
+                                onChanged: (val) {
+                                  widget.session.sfxService.toggleSfx();
+                                  setSheetState(() {});
+                                },
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(color: Color(0xFF38BDF8)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    ),
+                                    icon: const Icon(Icons.gavel_rounded, color: Color(0xFF38BDF8), size: 14),
+                                    label: const Text('🔨 Test Gavel', style: TextStyle(color: Color(0xFF38BDF8), fontSize: 11, fontWeight: FontWeight.w800)),
+                                    onPressed: () => widget.session.sfxService.playHammerDown(),
+                                  ),
+                                  OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(color: Color(0xFFEF4444)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    ),
+                                    icon: const Icon(Icons.favorite_rounded, color: Color(0xFFEF4444), size: 14),
+                                    label: const Text('💓 Test Heartbeat', style: TextStyle(color: Color(0xFFEF4444), fontSize: 11, fontWeight: FontWeight.w800)),
+                                    onPressed: () => widget.session.sfxService.playCountdownTick(secondsRemaining: 3),
+                                  ),
+                                  OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(color: Color(0xFFF59E0B)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    ),
+                                    icon: const Icon(Icons.volume_up_rounded, color: Color(0xFFF59E0B), size: 14),
+                                    label: const Text('🎙️ Test Dual Voice', style: TextStyle(color: Color(0xFFF59E0B), fontSize: 11, fontWeight: FontWeight.w800)),
+                                    onPressed: () => widget.session.voiceService.testSpeech(),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSoloRegulationTile({required IconData icon, required String title, required String desc}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D2A20),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: const Color(0xFFF59E0B), size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A))),
+                const SizedBox(height: 4),
+                Text(desc, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.3)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

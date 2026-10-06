@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../models/ai_model_valuation.dart';
 import '../models/league.dart';
 import '../services/league_provider.dart';
 import '../services/league_service.dart';
+import '../services/stayrare_ai_learner.dart';
 import 'rules_guide_view.dart';
 import 'setup_view.dart';
 import 'solo_ai_auction_view.dart';
@@ -564,102 +566,7 @@ class HomeView extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.75,
-        maxChildSize: 0.9,
-        builder: (_, scrollController) => Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('1v1 Match Regulations', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF0F172A))),
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text('Rules and mechanics for the 1v1 stayrare-model solo arena:', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView(
-                  controller: scrollController,
-                  children: [
-                    _buildHomeRuleTile(
-                      icon: Icons.account_balance_wallet_rounded,
-                      title: '₹10,000 Starting Purse',
-                      desc: 'Both teams start with ₹10,000. Balance your spending between marquee stars and squad depth.',
-                    ),
-                    _buildHomeRuleTile(
-                      icon: Icons.groups_rounded,
-                      title: 'Squad Composition Quotas',
-                      desc: 'Teams must build 9-11 player squads with minimum 1 WK, 3 BAT, 3 BOWL, and 2 All-Rounders.',
-                    ),
-                    _buildHomeRuleTile(
-                      icon: Icons.style_rounded,
-                      title: '1 RTM (Right-To-Match) Card',
-                      desc: 'Match your opponent’s winning bid. Opponents can raise to any multiple of ₹50 before final match.',
-                    ),
-                    _buildHomeRuleTile(
-                      icon: Icons.pause_circle_filled_rounded,
-                      title: '1 Strategic Timeout (30 Seconds)',
-                      desc: 'Freeze the bidding clock once per match to review squad roles, analyze purse math, and adjust tactics.',
-                    ),
-                    _buildHomeRuleTile(
-                      icon: Icons.bolt_rounded,
-                      title: 'Round 2 Accelerated Phase',
-                      desc: 'Unsold players return in an accelerated round with a 40% discount on base prices.',
-                    ),
-                    _buildHomeRuleTile(
-                      icon: Icons.trending_up_rounded,
-                      title: 'Graduated IPL Bid Increments',
-                      desc: '• Below ₹1,000: +₹100\n• ₹1,000 – ₹2,500: +₹250\n• Above ₹2,500: +₹500',
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHomeRuleTile({required IconData icon, required String title, required String desc}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0D2A20),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: const Color(0xFFF59E0B), size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Color(0xFF0F172A))),
-                const SizedBox(height: 4),
-                Text(desc, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.3)),
-              ],
-            ),
-          ),
-        ],
-      ),
+      builder: (ctx) => const _HomeValuationsModalContent(),
     );
   }
 
@@ -966,6 +873,359 @@ class HomeView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _HomeValuationsModalContent extends StatefulWidget {
+  const _HomeValuationsModalContent();
+
+  @override
+  State<_HomeValuationsModalContent> createState() => _HomeValuationsModalContentState();
+}
+
+class _HomeValuationsModalContentState extends State<_HomeValuationsModalContent> {
+  int _selectedTab = 0; // 0: Valuations & Ranks, 1: Match Rules
+  String _roleFilter = 'All';
+
+  @override
+  Widget build(BuildContext context) {
+    final learner = StayrareAiLearner();
+    final rankedList = learner.rankedPlayers;
+    final totalLearned = learner.totalAuctionsLearned;
+
+    List<PlayerValuation> filteredPlayers = rankedList;
+    if (_roleFilter == 'BAT') {
+      filteredPlayers = rankedList.where((p) => p.role == CricketRole.bat).toList();
+    } else if (_roleFilter == 'BOWL') {
+      filteredPlayers = rankedList.where((p) => p.role == CricketRole.bowl).toList();
+    } else if (_roleFilter == 'AR') {
+      filteredPlayers = rankedList.where((p) => p.role == CricketRole.allRounder).toList();
+    } else if (_roleFilter == 'Top 7') {
+      filteredPlayers = rankedList.where((p) => p.adjustedRank <= 7).toList();
+    }
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.82,
+      maxChildSize: 0.94,
+      builder: (_, scrollController) => Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.analytics_rounded, color: Color(0xFFD97706), size: 22),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          totalLearned > 0
+                              ? 'LEARNED FROM $totalLearned AUCTIONS'
+                              : 'COLD-START BASELINE (AUCTION #1)',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: totalLearned > 0 ? const Color(0xFF059669) : const Color(0xFF64748B),
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const Text(
+                          'Player Valuations & Ranks',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Tab Selector Row
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.all(3),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedTab = 0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _selectedTab == 0 ? Colors.white : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: _selectedTab == 0
+                              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 2))]
+                              : null,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Market Ranks (${rankedList.length})',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: _selectedTab == 0 ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _selectedTab = 1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _selectedTab == 1 ? Colors.white : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: _selectedTab == 1
+                              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 4, offset: const Offset(0, 2))]
+                              : null,
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Match Regulations',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                            color: _selectedTab == 1 ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Tab 0: Player Valuations & Dynamic Market Rankings
+            if (_selectedTab == 0) ...[
+              // Role Filter Chips
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: ['All', 'Top 7', 'BAT', 'BOWL', 'AR'].map((role) {
+                    final isSel = _roleFilter == role;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        label: Text(role, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: isSel ? Colors.white : const Color(0xFF334155))),
+                        selected: isSel,
+                        selectedColor: const Color(0xFF0D2A20),
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        onSelected: (val) {
+                          if (val) setState(() => _roleFilter = role);
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Players List
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollController,
+                  itemCount: filteredPlayers.length,
+                  separatorBuilder: (_, _) => const Divider(height: 10, color: Color(0xFFF1F5F9)),
+                  itemBuilder: (ctx, idx) {
+                    final p = filteredPlayers[idx];
+                    final isTop3 = p.adjustedRank <= 3;
+                    final rankColor = p.adjustedRank == 1
+                        ? const Color(0xFFD97706)
+                        : (p.adjustedRank == 2 ? const Color(0xFF64748B) : (p.adjustedRank == 3 ? const Color(0xFFB45309) : const Color(0xFF0F172A)));
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                      child: Row(
+                        children: [
+                          // Rank Badge
+                          Container(
+                            width: 32,
+                            height: 32,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: isTop3 ? rankColor.withValues(alpha: 0.15) : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                              border: isTop3 ? Border.all(color: rankColor.withValues(alpha: 0.4), width: 1.5) : null,
+                            ),
+                            child: Text(
+                              '#${p.adjustedRank}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900,
+                                color: isTop3 ? rankColor : const Color(0xFF0F172A),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+
+                          // Name & Role
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      p.name,
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF0D2A20).withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(5),
+                                      ),
+                                      child: Text(
+                                        '${p.role.icon} ${p.role.shortCode}',
+                                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF0D2A20)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Skill: ${p.score} • Auction Score: ${p.auctionScore} • Avg: ₹${p.historicalAvgPrice}',
+                                  style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Composite Score & Tier Badge
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: p.compositeScore >= 70 ? const Color(0xFFFEF3C7) : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  p.tierBadge,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    color: p.compositeScore >= 70 ? const Color(0xFFD97706) : const Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Score: ${p.compositeScore}/100',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ] else ...[
+              // Tab 1: Match Regulations
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  children: [
+                    _buildHomeRuleTile(
+                      icon: Icons.account_balance_wallet_rounded,
+                      title: '₹12,000 Starting Purse',
+                      desc: 'Both teams start with ₹12,000 for a 10-player squad. Target average spend is ₹1,200 per player.',
+                    ),
+                    _buildHomeRuleTile(
+                      icon: Icons.groups_rounded,
+                      title: 'Squad Mandates (10 Players)',
+                      desc: 'Teams must draft 10 players: max 5 pure batsmen, min 5 bowling options (Bowlers + All-Rounders).',
+                    ),
+                    _buildHomeRuleTile(
+                      icon: Icons.style_rounded,
+                      title: '1 RTM (Right-To-Match) Card',
+                      desc: 'Match your opponent’s winning bid. Opponents can raise to any multiple of ₹50 before final match.',
+                    ),
+                    _buildHomeRuleTile(
+                      icon: Icons.pause_circle_filled_rounded,
+                      title: '1 Strategic Timeout (30 Seconds)',
+                      desc: 'Freeze the bidding clock once per match to review squad roles, analyze purse math, and adjust tactics.',
+                    ),
+                    _buildHomeRuleTile(
+                      icon: Icons.bolt_rounded,
+                      title: 'Round 2 Accelerated Phase',
+                      desc: 'Unsold players return in an accelerated round with a 40% discount on base prices.',
+                    ),
+                    _buildHomeRuleTile(
+                      icon: Icons.trending_up_rounded,
+                      title: 'Graduated IPL Bid Increments',
+                      desc: '• Below ₹1,000: +₹100\n• ₹1,000 – ₹2,500: +₹250\n• Above ₹2,500: +₹500',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeRuleTile({required IconData icon, required String title, required String desc}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D2A20),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: const Color(0xFFF59E0B), size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A))),
+                const SizedBox(height: 2),
+                Text(desc, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), height: 1.3)),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

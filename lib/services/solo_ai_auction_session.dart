@@ -1159,6 +1159,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
       );
       latestRecordedSession = session;
       latestLearnedInsights = learnerService.learnFromCompletedAuction(session);
+      await firebaseService.syncPlayerValuationsToFirestore(learnerService.rankedPlayers);
       notifyListeners();
     } catch (e) {
       if (kDebugMode) {

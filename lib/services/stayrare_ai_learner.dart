@@ -124,7 +124,7 @@ class StayrareAiLearner extends ChangeNotifier {
         note = 'Sold for ₹$winningPrice. Auction score calibrated.';
       }
 
-      final winner = session.userSquadNames.contains(player.name) ? session.userTeamName : session.aiTeamName;
+      final winner = (study?.userWon ?? false) ? session.userTeamName : session.aiTeamName;
 
       _latestAuctionInsights.add(LearnedAuctionInsight(
         playerName: player.name,
