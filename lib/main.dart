@@ -10,13 +10,12 @@ import 'views/match_day_view.dart';
 import 'views/player_pool_view.dart';
 import 'views/rules_guide_view.dart';
 
-import 'models/ai_model_valuation.dart';
-import 'services/stayrare_firebase_service.dart';
+import 'services/stayrare_ai_learner.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AiBrainService().loadBrainFromFile();
-  StayrareFirebaseService().syncPlayerValuationsToFirestore(StayrarePlayerDatabase.officialValuations);
+  await StayrareAiLearner().loadFromFirestore();
   runApp(const CricketLeagueApp());
 }
 

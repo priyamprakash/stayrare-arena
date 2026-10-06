@@ -300,6 +300,61 @@ class StayrareFirebaseService {
     }
   }
 
+  /// Retrieve all 22 player profiles and learned rankings from Firebase Firestore
+  Future<List<PlayerValuation>> fetchPlayerValuationsFromFirestore() async {
+    try {
+      final url = Uri.parse(
+        'https://firestore.googleapis.com/v1/projects/$firebaseProjectId/databases/(default)/documents/player_valuations?pageSize=50',
+      );
+      final response = await http.get(url).timeout(const Duration(seconds: 4));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final documents = data['documents'] as List<dynamic>?;
+        if (documents != null && documents.isNotEmpty) {
+          final List<PlayerValuation> results = [];
+          for (final doc in documents) {
+            final fields = doc['fields'] as Map<String, dynamic>?;
+            if (fields == null) continue;
+            final name = fields['name']?['stringValue'] ?? '';
+            if (name.isEmpty) continue;
+            final score = int.tryParse(fields['score']?['integerValue']?.toString() ?? '50') ?? 50;
+            final auctionScore = int.tryParse(fields['auction_score']?['integerValue']?.toString() ?? '50') ?? 50;
+            final timesAuctioned = int.tryParse(fields['times_auctioned']?['integerValue']?.toString() ?? '0') ?? 0;
+            final historicalAvgPrice = int.tryParse(fields['historical_avg_price']?['integerValue']?.toString() ?? '1200') ?? 1200;
+            final adjustedRank = int.tryParse(fields['adjusted_rank']?['integerValue']?.toString() ?? '0') ?? 0;
+            final minCeiling = int.tryParse(fields['min_ceiling']?['integerValue']?.toString() ?? '1000') ?? 1000;
+            final maxCeiling = int.tryParse(fields['max_ceiling']?['integerValue']?.toString() ?? '1400') ?? 1400;
+            final roleStr = (fields['role']?['stringValue'] ?? 'AR').toString().toUpperCase();
+            final roleDesc = fields['role_description']?['stringValue'] ?? 'Player';
+
+            CricketRole role = CricketRole.allRounder;
+            if (roleStr == 'BAT') role = CricketRole.bat;
+            if (roleStr == 'BOWL') role = CricketRole.bowl;
+
+            results.add(PlayerValuation(
+              name: name,
+              score: score,
+              auctionScore: auctionScore,
+              historicalAvgPrice: historicalAvgPrice,
+              timesAuctioned: timesAuctioned,
+              adjustedRank: adjustedRank,
+              minCeiling: minCeiling,
+              maxCeiling: maxCeiling,
+              role: role,
+              roleDescription: roleDesc,
+            ));
+          }
+          return results;
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error fetching valuations from Firestore: $e');
+      }
+    }
+    return [];
+  }
+
   /// Live sync of auction state on every bid or sold player
   Future<void> recordLiveAuctionProgress({
     required String sessionId,

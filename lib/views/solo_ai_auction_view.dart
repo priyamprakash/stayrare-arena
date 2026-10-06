@@ -4601,7 +4601,7 @@ class _SoloValuationsSheetContentState extends State<_SoloValuationsSheetContent
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Skill: ${p.score} • Auction Score: ${p.auctionScore} • Avg: ₹${p.historicalAvgPrice}',
+                                  'Skill: ${p.score} • Auction Score: ${p.auctionScore} • Avg: ₹${p.historicalAvgPrice} • Sold: ${p.timesAuctioned}x',
                                   style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
                                 ),
                               ],

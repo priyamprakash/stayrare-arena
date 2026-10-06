@@ -1084,6 +1084,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
       isUser: true,
     );
 
+    learnerService.recordPlayerSold(player.name, price);
     checkAuctionCompletion();
     _syncLiveStateToFirestore();
     notifyListeners();
@@ -1108,6 +1109,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
       isUser: false,
     );
 
+    learnerService.recordPlayerSold(player.name, price);
     checkAuctionCompletion();
     _syncLiveStateToFirestore();
     notifyListeners();

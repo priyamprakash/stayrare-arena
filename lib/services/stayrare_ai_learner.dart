@@ -55,6 +55,48 @@ class StayrareAiLearner extends ChangeNotifier {
     _recalculateRankings();
   }
 
+  /// Load learned player valuations and rankings from Firestore
+  Future<void> loadFromFirestore() async {
+    try {
+      final fetched = await StayrareFirebaseService().fetchPlayerValuationsFromFirestore();
+      if (fetched.isNotEmpty) {
+        _learnedDatabase.clear();
+        int maxAuctionCount = 0;
+        for (final p in fetched) {
+          _learnedDatabase[p.name.toLowerCase()] = p;
+          if (p.timesAuctioned > maxAuctionCount) {
+            maxAuctionCount = p.timesAuctioned;
+          }
+        }
+        totalAuctionsLearned = maxAuctionCount;
+        _recalculateRankings();
+        notifyListeners();
+      } else {
+        // First-time cold start: upload initial baseline to Firestore
+        await StayrareFirebaseService().syncPlayerValuationsToFirestore(rankedPlayers);
+      }
+    } catch (_) {}
+  }
+
+  /// Real-time learning whenever a single player is hammered down/sold during an auction
+  void recordPlayerSold(String playerName, int winningPrice) {
+    final player = getPlayerValuation(playerName);
+    final n = player.timesAuctioned;
+    final newAvg = ((player.historicalAvgPrice * n + winningPrice) / (n + 1)).round();
+    player.historicalAvgPrice = newAvg;
+    player.timesAuctioned = n + 1;
+
+    // Calibrate auction score and ceilings immediately
+    final rawScore = ((newAvg / 3800.0) * 100).round().clamp(5, 99);
+    player.auctionScore = rawScore;
+    player.minCeiling = (newAvg * 0.85).round().clamp(100, 4000);
+    player.maxCeiling = (newAvg * 1.25).round().clamp(150, 4500);
+
+    _recalculateRankings();
+    StayrareFirebaseService().syncPlayerValuationsToFirestore(rankedPlayers);
+    notifyListeners();
+  }
+
   void resetToDefaults() {
     totalAuctionsLearned = 0;
     _latestAuctionInsights.clear();
