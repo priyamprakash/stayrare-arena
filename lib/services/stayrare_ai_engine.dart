@@ -31,7 +31,7 @@ class AiDecisionInput {
     required this.userSquadCount,
     required this.playersRemainingInPool,
     this.playersRemainingList = const [],
-    this.targetSquadSize = 10,
+    this.targetSquadSize = 11,
     this.isAcceleratedRound = false,
     this.isJumpBidByOpponent = false,
     this.yourRoleCounts = const {},

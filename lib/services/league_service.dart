@@ -41,7 +41,7 @@ class LeagueService extends ChangeNotifier {
   };
 
   // Match settings
-  int targetSquadSizePerSide = 10; // Default 10 per side, adjustable
+  int targetSquadSizePerSide = 11; // Default 11 per side (Full Playing XI)
 
   // Captains & Team Names Configuration (Default: Saurabh & Avinash)
   String _captain1Name = 'Saurabh';

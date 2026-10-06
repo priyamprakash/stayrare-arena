@@ -3,6 +3,8 @@ import 'package:stayrare/models/ai_model_valuation.dart';
 import 'package:stayrare/services/stayrare_ai_engine.dart';
 import 'package:stayrare/services/solo_ai_auction_session.dart';
 import 'package:stayrare/services/ai_brain_loader.dart';
+import 'package:stayrare/services/stayrare_firebase_service.dart';
+import 'package:stayrare/services/stayrare_ai_learner.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -51,7 +53,7 @@ void main() {
 
     test('AI bids aggressively above 1750 on Rahul when top 7 star is needed and purse is available', () {
       final decision = engine.decide(
-        const AiDecisionInput(
+        AiDecisionInput(
           player: 'Rahul',
           currentBid: 1800,
           currentBidLeader: 'user',
@@ -136,7 +138,7 @@ void main() {
     test('AI passes when bid exceeds ceiling for normal players', () {
       // Ritesh score 61, ceiling 1250
       final decision = engine.decide(
-        const AiDecisionInput(
+        AiDecisionInput(
           player: 'Ritesh',
           currentBid: 1600,
           currentBidLeader: 'user',
@@ -202,7 +204,7 @@ void main() {
 
     test('AI passes on opening bid for low-tier players when stars remain in pool', () {
       final decision = engine.decide(
-        const AiDecisionInput(
+        AiDecisionInput(
           player: 'Dev', // score 5
           currentBid: 0,
           currentBidLeader: 'none',
@@ -416,6 +418,68 @@ void main() {
       expect(session.rtmRaisedPrice, greaterThanOrEqualTo(2500));
       expect(session.rtmRaisedPrice, lessThanOrEqualTo(3000));
       expect(session.rtmPhase, SoloRtmPhase.userRaisingPrice);
+    });
+
+    test('SoloAiAuctionSession initializes with 11-person squad target for Full Playing XI', () {
+      final session = SoloAiAuctionSession();
+      expect(session.targetSquadSize, 11);
+      expect(session.playerPool.length, 22);
+    });
+
+    test('PlayerValuation computes compositeScore combining skill (60%) and auctionScore (40%)', () {
+      final priyam = StayrarePlayerDatabase.getValuationFor('Priyam');
+      expect(priyam.score, 93);
+      expect(priyam.auctionScore, 95);
+      // (93 * 0.6) + (95 * 0.4) = 55.8 + 38.0 = 93.8 -> 94
+      expect(priyam.compositeScore, 94);
+    });
+
+    test('StayrareAiLearner dynamically recalculates player auctionScore and rankings', () {
+      final learner = StayrareAiLearner();
+      final ranked = learner.rankedPlayers;
+      expect(ranked.isNotEmpty, isTrue);
+      expect(ranked.first.name, 'Priyam');
+      expect(ranked.first.adjustedRank, 1);
+
+      // Simulate completed auction recording
+      final session = RecordedAuctionSession(
+        id: 'test_auction_1',
+        timestamp: DateTime.now(),
+        userTeamName: 'Danapur Dabangg',
+        aiTeamName: 'stayrare-model',
+        targetSquadSize: 11,
+        initialPurse: 12000,
+        userPurseRemaining: 100,
+        aiPurseRemaining: 2700,
+        biddingProcess: [
+          {'order_index': 1, 'player_name': 'Priyam', 'bidder': 'user', 'amount': 3600}
+        ],
+        opponentProfile: OpponentAuctionProfile(
+          userTeamName: 'Danapur Dabangg',
+          totalUserBidsPlaced: 15,
+          totalUserSpent: 11900,
+          userJumpBidsPlaced: 2,
+          top7StarsAcquired: 4,
+          biddingStyle: 'Aggressive Star Hunter (Top-7 Specialist)',
+          playerStudies: {
+            'Priyam': OpponentPlayerStudy(
+              playerName: 'Priyam',
+              userBidCount: 5,
+              userMaxBidPlaced: 3600,
+              userWon: true,
+              finalPrice: 3600,
+              wasJumpBidUsed: true,
+            ),
+          },
+        ),
+        playerAuctionPrices: {'Priyam': 3600, 'Dev': 100},
+      );
+
+      final insights = learner.learnFromCompletedAuction(session);
+      expect(insights.isNotEmpty, isTrue);
+      final priyamInsight = insights.firstWhere((i) => i.playerName == 'Priyam');
+      expect(priyamInsight.finalWinningPrice, 3600);
+      expect(priyamInsight.newAuctionScore, greaterThanOrEqualTo(90));
     });
   });
 }

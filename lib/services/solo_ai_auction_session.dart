@@ -5,6 +5,8 @@ import '../models/ai_model_valuation.dart';
 import 'stayrare_ai_engine.dart';
 import 'auction_voice_service.dart';
 import 'auction_sfx_service.dart';
+import 'stayrare_firebase_service.dart';
+import 'stayrare_ai_learner.dart';
 
 enum SoloBidLeader { none, user, ai }
 
@@ -88,7 +90,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
   // Configuration
   String userTeamName = 'My Team';
   String aiTeamName = 'stayrare-model';
-  int targetSquadSize = 10;
+  int targetSquadSize = 11;
   int initialPurse = 12000;
 
   // Session State
@@ -115,6 +117,14 @@ class SoloAiAuctionSession extends ChangeNotifier {
   final List<SoloBoughtPlayer> userSquad = [];
   final List<SoloBoughtPlayer> aiSquad = [];
   final List<SoloBidStep> currentRoundBids = [];
+  final Map<String, List<SoloBidStep>> playerBidHistory = {};
+  final List<Map<String, dynamic>> fullBiddingLog = [];
+
+  // Firebase & Learning State
+  final StayrareFirebaseService firebaseService = StayrareFirebaseService();
+  final StayrareAiLearner learnerService = StayrareAiLearner();
+  RecordedAuctionSession? latestRecordedSession;
+  List<LearnedAuctionInsight> latestLearnedInsights = [];
 
   PlayerValuation? currentPlayerOnBlock;
   PlayerValuation? nominatedNextPlayer;
@@ -167,7 +177,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
 
     userTeamName = userName ?? userTeamName;
     aiTeamName = 'stayrare-model';
-    targetSquadSize = squadTarget ?? 10;
+    targetSquadSize = squadTarget ?? 11;
     initialPurse = purseAmount ?? _aiEngine.brain.startingPurse;
 
     userPurse = initialPurse;
@@ -185,6 +195,10 @@ class SoloAiAuctionSession extends ChangeNotifier {
     userSquad.clear();
     aiSquad.clear();
     currentRoundBids.clear();
+    playerBidHistory.clear();
+    fullBiddingLog.clear();
+    latestRecordedSession = null;
+    latestLearnedInsights.clear();
     playerStatusMap.clear();
 
     currentPlayerOnBlock = null;
@@ -548,6 +562,40 @@ class SoloAiAuctionSession extends ChangeNotifier {
     }
   }
 
+  // --- Bid Telemetry Helper ---
+  void _recordBid({
+    required SoloBidLeader bidder,
+    required int amount,
+    required String note,
+    String? trashTalk,
+    bool isJump = false,
+  }) {
+    final step = SoloBidStep(
+      bidder: bidder,
+      amount: amount,
+      note: note,
+      trashTalk: trashTalk,
+      isJumpBid: isJump,
+    );
+    currentRoundBids.add(step);
+
+    if (currentPlayerOnBlock != null) {
+      final pName = currentPlayerOnBlock!.name;
+      playerBidHistory.putIfAbsent(pName, () => []).add(step);
+
+      fullBiddingLog.add({
+        'order_index': fullBiddingLog.length + 1,
+        'player_name': pName,
+        'bidder': bidder == SoloBidLeader.user ? 'user' : (bidder == SoloBidLeader.ai ? 'ai' : 'none'),
+        'amount': amount,
+        'is_jump_bid': isJump,
+        'note': note,
+        'trash_talk': trashTalk,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+    }
+  }
+
   // --- User Bidding ---
 
   void userPlaceBid({int? customAmount, bool isJump = false}) {
@@ -560,12 +608,12 @@ class SoloAiAuctionSession extends ChangeNotifier {
     currentLeader = SoloBidLeader.user;
     lastBidWasJump = isJump;
 
-    currentRoundBids.add(SoloBidStep(
+    _recordBid(
       bidder: SoloBidLeader.user,
       amount: bid,
       note: isJump ? '⚡ User placed a POWER JUMP BID to ₹$bid' : 'User raised bid to ₹$bid',
-      isJumpBid: isJump,
-    ));
+      isJump: isJump,
+    );
 
     _sfx.playPaddleClick();
     if (isJump || bid >= 2000) {
@@ -591,11 +639,11 @@ class SoloAiAuctionSession extends ChangeNotifier {
       _finalizeWinner(SoloBidLeader.ai);
     } else if (currentLeader == SoloBidLeader.none) {
       // User passes on opening! Let AI evaluate opening bid or marking unsold
-      currentRoundBids.add(SoloBidStep(
+      _recordBid(
         bidder: SoloBidLeader.user,
         amount: 0,
         note: 'You passed on opening bid. Waiting for AI...',
-      ));
+      );
       notifyListeners();
       _triggerAiTurn();
     }
@@ -607,11 +655,11 @@ class SoloAiAuctionSession extends ChangeNotifier {
     _countdownTimer?.cancel();
     playerStatusMap[player.name] = SoloPlayerStatus.unsold;
     _voice.announceUnsold(playerName: player.name);
-    currentRoundBids.add(SoloBidStep(
+    _recordBid(
       bidder: SoloBidLeader.user,
       amount: 0,
       note: '${player.name} marked unsold',
-    ));
+    );
     currentPlayerOnBlock = null;
     currentLeader = SoloBidLeader.none;
     checkAuctionCompletion();
@@ -715,12 +763,12 @@ class SoloAiAuctionSession extends ChangeNotifier {
         currentBidAmount = newBid;
         currentLeader = SoloBidLeader.ai;
 
-        currentRoundBids.add(SoloBidStep(
+        _recordBid(
           bidder: SoloBidLeader.ai,
           amount: newBid,
           note: decision.confidenceNote,
           trashTalk: decision.trashTalk,
-        ));
+        );
 
         _sfx.playPaddleClick();
         if (newBid >= 2000 || (newBid - currentBidAmount) >= 500) {
@@ -758,12 +806,12 @@ class SoloAiAuctionSession extends ChangeNotifier {
         // AI Passes / Lets player go!
         _countdownTimer?.cancel(); // Cancel timer immediately
 
-        currentRoundBids.add(SoloBidStep(
+        _recordBid(
           bidder: SoloBidLeader.ai,
           amount: currentBidAmount,
           note: decision.confidenceNote,
           trashTalk: decision.trashTalk,
-        ));
+        );
 
         if (decision.trashTalk != null && decision.trashTalk!.isNotEmpty) {
           _voice.announceAiPassWithBanter(
@@ -1050,6 +1098,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
       }
       if (!isAuctionCompleted) {
         isAuctionCompleted = true;
+        _triggerFirebaseAndLearning();
         Future.delayed(const Duration(milliseconds: 1400), () {
           if (isAuctionCompleted) {
             _voice.speak(postAuctionAiOpinion, tone: aiBelievesItWon ? AuctionTone.hype : AuctionTone.trashTalk);
@@ -1059,10 +1108,37 @@ class SoloAiAuctionSession extends ChangeNotifier {
     }
   }
 
+  void _triggerFirebaseAndLearning() async {
+    try {
+      final session = await firebaseService.recordAuctionProcess(
+        userTeamName: userTeamName,
+        aiTeamName: aiTeamName,
+        targetSquadSize: targetSquadSize,
+        initialPurse: initialPurse,
+        userPurseRemaining: userPurse,
+        aiPurseRemaining: aiPurse,
+        userSquad: userSquad,
+        aiSquad: aiSquad,
+        fullBiddingLog: fullBiddingLog,
+        playerBidHistory: playerBidHistory,
+      );
+      latestRecordedSession = session;
+      latestLearnedInsights = learnerService.learnFromCompletedAuction(session);
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('Firebase/Learner processing: $e');
+      }
+    }
+  }
+
   void _handleAiAutoFillRemaining() {
     final aiSlotsNeeded = targetSquadSize - aiSquad.length;
     if (aiSlotsNeeded <= 0) {
-      isAuctionCompleted = true;
+      if (!isAuctionCompleted) {
+        isAuctionCompleted = true;
+        _triggerFirebaseAndLearning();
+      }
       notifyListeners();
       return;
     }
@@ -1094,7 +1170,10 @@ class SoloAiAuctionSession extends ChangeNotifier {
     final names = picks.map((p) => p.name).join(', ');
     _voice.speak("Hello $userTeamName Owner! We have remaining players in the pool, and I choose $names at base price to fill my squad!");
 
-    isAuctionCompleted = true;
+    if (!isAuctionCompleted) {
+      isAuctionCompleted = true;
+      _triggerFirebaseAndLearning();
+    }
     notifyListeners();
   }
 
