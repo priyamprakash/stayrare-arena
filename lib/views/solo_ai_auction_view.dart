@@ -1324,29 +1324,18 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                       children: [
                         Text(
                           _session.lastAiDecision?.isPass == true
-                              ? 'AI conceded! Awarding player to you...'
-                              : 'You are leading at ₹${_session.currentBidAmount}',
+                              ? 'AI conceded! Finalizing award to you...'
+                              : 'You are leading the bid at ₹${_session.currentBidAmount}',
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF065F46)),
                         ),
                         Text(
                           _session.lastAiDecision?.isPass == true
-                              ? 'Finalizing deal without timer wait.'
-                              : 'AI is evaluating or you can claim immediately.',
+                              ? 'Hammer down in progress.'
+                              : 'Awaiting AI model evaluation and gavel call.',
                           style: const TextStyle(fontSize: 10, color: Color(0xFF047857)),
                         ),
                       ],
                     ),
-                  ),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0D2A20),
-                      foregroundColor: const Color(0xFFF59E0B),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    icon: const Icon(Icons.gavel_rounded, size: 14),
-                    label: const Text('Claim ⚡', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11)),
-                    onPressed: () => _session.quickClaimPlayer(),
                   ),
                 ],
               ),

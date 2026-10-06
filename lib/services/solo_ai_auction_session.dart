@@ -802,12 +802,6 @@ class SoloAiAuctionSession extends ChangeNotifier {
     });
   }
 
-  void quickClaimPlayer() {
-    if (currentPlayerOnBlock != null && currentLeader == SoloBidLeader.user) {
-      _finalizeWinner(SoloBidLeader.user);
-    }
-  }
-
   // --- Finalizing Winner & RTM Logic ---
 
   void _finalizeWinner(SoloBidLeader leader) {

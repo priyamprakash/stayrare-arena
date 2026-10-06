@@ -216,18 +216,15 @@ void main() {
       expect(decision.strategyNote, contains('Passing opening bid'));
     });
 
-    test('User quickClaimPlayer immediately finalizes deal when user is leading', () {
+    test('User placing bid sets user as leader and triggers AI evaluation turn', () {
       final session = SoloAiAuctionSession();
       final player = session.playerPool.firstWhere((p) => p.name == 'Dev');
       session.placePlayerOnBlock(player);
 
       session.userPlaceBid();
       expect(session.currentLeader, SoloBidLeader.user);
-
-      session.quickClaimPlayer();
-      expect(session.userSquad.length, 1);
-      expect(session.userSquad.first.valuation.name, 'Dev');
-      expect(session.currentPlayerOnBlock, isNull);
+      expect(session.currentBidAmount, 100);
+      expect(session.isAiThinking, isTrue);
     });
 
     test('User can mark player unsold directly and re-auction later', () {
