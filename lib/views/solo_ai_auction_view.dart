@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/ai_model_valuation.dart';
 import '../services/solo_ai_auction_session.dart';
+import '../services/stayrare_ai_learner.dart';
 
 class SoloAiAuctionView extends StatefulWidget {
   const SoloAiAuctionView({super.key});
@@ -656,6 +657,7 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                   const SizedBox(height: 14),
                   ...claimed.map((p) {
                     final price = _session.getBasePriceForPlayer(p);
+                    final val = _session.learnerService.getPlayerValuation(p.name);
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.all(10),
@@ -666,14 +668,58 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                       ),
                       child: Row(
                         children: [
-                          Text(p.role.icon, style: const TextStyle(fontSize: 18)),
-                          const SizedBox(width: 8),
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              CircleAvatar(
+                                radius: 16,
+                                backgroundColor: const Color(0xFF0D2A20),
+                                child: Text(p.role.icon, style: const TextStyle(fontSize: 14)),
+                              ),
+                              Positioned(
+                                top: -3,
+                                left: -3,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFD97706),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    '#${val.adjustedRank}',
+                                    style: const TextStyle(fontSize: 7.5, fontWeight: FontWeight.w900, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(p.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                                Text('${p.roleDescription} • Score ${p.score}/100', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                                Row(
+                                  children: [
+                                    Text(p.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        '${p.role.icon} ${p.role.shortCode}',
+                                        style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Color(0xFF047857)),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Rank #${val.adjustedRank} • Rating: ${val.compositeScore}/100 • Avg: ₹${val.historicalAvgPrice}',
+                                  style: const TextStyle(fontSize: 10, color: Color(0xFF047857), fontWeight: FontWeight.w700),
+                                ),
                               ],
                             ),
                           ),
@@ -969,127 +1015,139 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
             ),
           ),
 
-          // Player Main Hero Info
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Row(
-              children: [
-                // Player Role Avatar
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.15),
-                    border: Border.all(color: const Color(0xFF34D399), width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+          // Player Main Hero Info (Tappable for Full DB Profile)
+          InkWell(
+            onTap: () => _showPlayerValuationProfileDialog(context, player),
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Row(
+                children: [
+                  // Player Role Avatar
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.15),
+                      border: Border.all(color: const Color(0xFF34D399), width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Text(
+                        player.role.icon,
+                        style: const TextStyle(fontSize: 28),
                       ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      player.role.icon,
-                      style: const TextStyle(fontSize: 28),
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
+                  const SizedBox(width: 16),
 
-                // Name & Role
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        player.name,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -0.5,
+                  // Name & Role
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                player.name,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF6EE7B7)),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        player.roleDescription,
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade300, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: val.adjustedRank == 1
-                                  ? const Color(0xFFF59E0B)
-                                  : (val.adjustedRank == 2
-                                      ? const Color(0xFF94A3B8)
-                                      : (val.adjustedRank == 3 ? const Color(0xFFD97706) : const Color(0xFF10B981))),
-                              borderRadius: BorderRadius.circular(6),
+                        const SizedBox(height: 2),
+                        Text(
+                          player.roleDescription,
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade300, fontWeight: FontWeight.w500),
+                        ),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: val.adjustedRank == 1
+                                    ? const Color(0xFFF59E0B)
+                                    : (val.adjustedRank == 2
+                                        ? const Color(0xFF94A3B8)
+                                        : (val.adjustedRank == 3 ? const Color(0xFFD97706) : const Color(0xFF10B981))),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '👑 DB Rank #${val.adjustedRank}',
+                                style: const TextStyle(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.w900),
+                              ),
                             ),
-                            child: Text(
-                              '👑 DB Rank #${val.adjustedRank}',
-                              style: const TextStyle(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.w900),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Base: ₹${_session.getBasePriceForPlayer(player)}',
+                                style: const TextStyle(fontSize: 10, color: Color(0xFFFDE68A), fontWeight: FontWeight.w700),
+                              ),
                             ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
+                              ),
+                              child: Text(
+                                '🎯 Rating: ${val.compositeScore}/100',
+                                style: const TextStyle(fontSize: 10, color: Color(0xFF6EE7B7), fontWeight: FontWeight.w800),
+                              ),
                             ),
-                            child: Text(
-                              'Base: ₹${_session.getBasePriceForPlayer(player)}',
-                              style: const TextStyle(fontSize: 10, color: Color(0xFFFDE68A), fontWeight: FontWeight.w700),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF59E0B).withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
+                              ),
+                              child: Text(
+                                '💰 DB Avg: ₹${val.historicalAvgPrice}',
+                                style: const TextStyle(fontSize: 10, color: Color(0xFFFCD34D), fontWeight: FontWeight.w800),
+                              ),
                             ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                val.timesAuctioned > 0 ? '${val.timesAuctioned}x Sold' : 'Baseline DB',
+                                style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w700),
+                              ),
                             ),
-                            child: Text(
-                              '🎯 Rating: ${val.compositeScore}/100',
-                              style: const TextStyle(fontSize: 10, color: Color(0xFF6EE7B7), fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF59E0B).withValues(alpha: 0.25),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
-                            ),
-                            child: Text(
-                              '💰 DB Avg: ₹${val.historicalAvgPrice}',
-                              style: const TextStyle(fontSize: 10, color: Color(0xFFFCD34D), fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              val.timesAuctioned > 0 ? '${val.timesAuctioned}x Sold' : 'Baseline DB',
-                              style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -2127,6 +2185,7 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                         ],
                       ),
                     ),
+                    onTap: () => _showPlayerValuationProfileDialog(context, player),
                     trailing: isAvailable
                         ? (_session.nominatedNextPlayer?.name == player.name
                             ? Container(
@@ -2418,6 +2477,7 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
               '${player.roleDescription} • Rating: ${val.compositeScore}/100 • DB Avg: ₹${val.historicalAvgPrice}',
               style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
             ),
+            onTap: () => _showPlayerValuationProfileDialog(context, player),
             trailing: Text(
               '₹${bought.price}',
               style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: color),
@@ -3357,6 +3417,176 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
     );
   }
 
+  void _showPlayerValuationProfileDialog(BuildContext context, PlayerValuation player) {
+    final val = _session.learnerService.getPlayerValuation(player.name);
+    final status = _session.playerStatusMap[player.name];
+    final isUnsold = status == SoloPlayerStatus.unsold;
+    final isAvailable = status == SoloPlayerStatus.pool || isUnsold;
+    final isTop3 = val.adjustedRank <= 3;
+    final rankColor = val.adjustedRank == 1
+        ? const Color(0xFFD97706)
+        : (val.adjustedRank == 2
+            ? const Color(0xFF64748B)
+            : (val.adjustedRank == 3 ? const Color(0xFFB45309) : const Color(0xFF0D2A20)));
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        contentPadding: const EdgeInsets.all(20),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Top Rank Badge & Avatar
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: isUnsold
+                          ? [Colors.grey.shade600, Colors.grey.shade800]
+                          : [const Color(0xFF0D2A20), const Color(0xFF1B4D3E)],
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      player.role.icon,
+                      style: const TextStyle(fontSize: 28),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isTop3 ? rankColor : const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: Text(
+                      '#${val.adjustedRank}',
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Player Name & Role
+            Text(
+              player.name,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${player.role.icon} ${player.role.label} • ${player.roleDescription}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+
+            // Database Valuation & Metrics Grid
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildProfileMetric('DB MARKET RANK', '#${val.adjustedRank} of 22', isTop3 ? rankColor : const Color(0xFF0F172A)),
+                      _buildProfileMetric('HISTORICAL AVG', '₹${val.historicalAvgPrice}', const Color(0xFFB45309)),
+                    ],
+                  ),
+                  const Divider(height: 20, color: Color(0xFFE2E8F0)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildProfileMetric('COMPOSITE SCORE', '${val.compositeScore}/100', const Color(0xFF047857)),
+                      _buildProfileMetric('AUCTION HISTORY', val.timesAuctioned > 0 ? '${val.timesAuctioned}x Sold' : 'Baseline DB', const Color(0xFF475569)),
+                    ],
+                  ),
+                  const Divider(height: 20, color: Color(0xFFE2E8F0)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildProfileMetric('MARKET TIER', val.tierBadge, val.compositeScore >= 70 ? const Color(0xFFD97706) : const Color(0xFF475569)),
+                      _buildProfileMetric('BASE PRICE', '₹${_session.getBasePriceForPlayer(player)}', const Color(0xFF0D2A20)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF64748B))),
+                  ),
+                ),
+                if (isAvailable && _session.currentPlayerOnBlock?.name != player.name) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isUnsold ? const Color(0xFFDC2626) : const Color(0xFF0D2A20),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      icon: Icon(_session.currentPlayerOnBlock == null ? Icons.gavel_rounded : Icons.queue_play_next_rounded, size: 16),
+                      label: Text(
+                        _session.currentPlayerOnBlock == null
+                            ? (isUnsold ? 'Re-Auction ⚡' : 'Auction Now 🔨')
+                            : 'Nominate Next 🎯',
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _session.requestPlayerForAuction(player);
+                        if (_session.currentPlayerOnBlock?.name == player.name) {
+                          _tabController.animateTo(0);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileMetric(String label, String value, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF94A3B8))),
+        const SizedBox(height: 2),
+        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: color)),
+      ],
+    );
+  }
+
   Widget _buildAuctioneerVoiceAnchorWidget() {
     return ListenableBuilder(
       listenable: _session.voiceService,
@@ -3632,7 +3862,7 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                                   : (p.adjustedRank == 3 ? const Color(0xFFB45309) : const Color(0xFF0D2A20)));
 
                           return InkWell(
-                            onTap: () => _showValuationsSheet(context),
+                            onTap: () => _showPlayerValuationProfileDialog(context, p),
                             borderRadius: BorderRadius.circular(12),
                             child: Container(
                               margin: const EdgeInsets.only(right: 8),
@@ -4386,7 +4616,71 @@ class _SoloSoldCelebrationDialogState extends State<_SoloSoldCelebrationDialog> 
                       letterSpacing: 0.8,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
+
+                  // DATABASE VALUATION & RANKING STRIP
+                  Builder(
+                    builder: (context) {
+                      final val = StayrareAiLearner().getPlayerValuation(widget.event.player.name);
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Column(
+                              children: [
+                                const Text('DB MARKET RANK', style: TextStyle(fontSize: 8.5, color: Color(0xFF94A3B8), fontWeight: FontWeight.w800)),
+                                const SizedBox(height: 2),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: val.adjustedRank == 1
+                                        ? const Color(0xFFD97706)
+                                        : (val.adjustedRank == 2
+                                            ? const Color(0xFF64748B)
+                                            : (val.adjustedRank == 3 ? const Color(0xFFB45309) : const Color(0xFF10B981))),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    '#${val.adjustedRank} of 22',
+                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(height: 24, width: 1, color: Colors.white12),
+                            Column(
+                              children: [
+                                const Text('HISTORICAL AVG', style: TextStyle(fontSize: 8.5, color: Color(0xFF94A3B8), fontWeight: FontWeight.w800)),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '₹${val.historicalAvgPrice}',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFFFCD34D)),
+                                ),
+                              ],
+                            ),
+                            Container(height: 24, width: 1, color: Colors.white12),
+                            Column(
+                              children: [
+                                const Text('RATING SCORE', style: TextStyle(fontSize: 8.5, color: Color(0xFF94A3B8), fontWeight: FontWeight.w800)),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${val.compositeScore}/100',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF6EE7B7)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
                   // WINNING TEAM & FINAL PRICE CARD
                   Container(
