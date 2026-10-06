@@ -178,10 +178,27 @@ class StayrareAiEngine {
     final userReserve = userSlotsNeeded > 1 ? (userSlotsNeeded - 1) * 200 : 0;
     final userRealisticMax = max(0, input.userPurseRemaining - userReserve);
 
-    // Principle 6: Endgame logic (last 3-4 players in pool)
+    // Principle 6: Endgame & Critical Pool Scarcity
     final isEndgame = input.playersRemainingInPool <= 4;
     final isBehindInSquad = input.yourSquadCount < input.userSquadCount;
-    final urgentSquadFill = isEndgame && isBehindInSquad && remainingSlotsToFill > 0;
+    final urgentSquadFill = (isEndgame && isBehindInSquad && remainingSlotsToFill > 0) || (input.playersRemainingInPool <= remainingSlotsToFill + 1 && remainingSlotsToFill > 0);
+
+    // Calculate Available Pool Hierarchy & Target Window Expansion
+    final sortedAvailablePool = List<PlayerValuation>.from(
+      input.playersRemainingList.isNotEmpty
+          ? input.playersRemainingList
+          : StayrareAiLearner().rankedPlayers,
+    )..sort((a, b) => b.compositeScore.compareTo(a.compositeScore));
+
+    final poolIndex = sortedAvailablePool.indexWhere(
+      (p) => p.name.trim().toLowerCase() == valuation.name.trim().toLowerCase(),
+    );
+
+    // Top Remaining Target Window:
+    // If user bought top 3 of original top 10, target window stretches to top 13!
+    // More generally, the top `remainingSlotsToFill` best available players in the remaining pool are AI's active primary targets.
+    final isTopRemainingTarget = poolIndex >= 0 && poolIndex < remainingSlotsToFill;
+    final isBestAvailableInPool = poolIndex == 0;
 
     // Top 7 Marquee Strategy: Aim to get at least 3 of Top 7 players (Priyam, Ashutosh, Sangam, Avinash, Saurabh, Sunny, Rahul)
     final isTop7 = StayrarePlayerDatabase.isTop7Player(valuation.name);
@@ -194,7 +211,8 @@ class StayrareAiEngine {
     if (isOpening) {
       final hasHigherTierRemaining = input.playersRemainingList.any((p) => p.score >= 50);
       final isLowTier = score < 45;
-      if (isLowTier && hasHigherTierRemaining && !urgentSquadFill) {
+      final aiPursePerSlotOpening = input.yourPurseRemaining / max(1, remainingSlotsToFill);
+      if (isLowTier && hasHigherTierRemaining && !urgentSquadFill && aiPursePerSlotOpening < 1400) {
         return AiBidDecision(
           action: 'pass',
           amount: null,
@@ -210,13 +228,41 @@ class StayrareAiEngine {
       _playerJitterMap[valuation.name] = jitter;
     }
     final jitter = _playerJitterMap[valuation.name]!;
-    var dynamicCeiling = (valuation.baseCeiling * (1.0 + jitter)).round();
 
-    // Human-like Purse Depth & Top 7 Scaling:
-    // If player is in Top 7 and AI hasn't secured 3 of them yet, stretch ceiling aggressively according to available purse!
+    // A. Available Purse-Per-Slot Dynamic Scaling:
+    // Example: AI has ₹10,000 for 5 slots -> aiPursePerSlot = ₹2,000!
+    // Baseline is ₹1,200 (12,000 / 10). So purseScale = 2000 / 1200 = 1.666x!
+    final aiPursePerSlot = input.yourPurseRemaining / max(1, remainingSlotsToFill);
+    final purseScalingFactor = (aiPursePerSlot / 1200.0).clamp(0.5, 2.5);
     final safeMaxForStar = max(0, input.yourPurseRemaining - (remainingSlotsToFill - 1) * brain.squadReserveFloor);
+
+    var dynamicCeiling = (valuation.baseCeiling * purseScalingFactor * (1.0 + jitter)).round();
+
+    // B. Purse Surplus Floor for Mid/Average/Value Players:
+    // When AI has a massive purse surplus (e.g. ₹2,000/slot), raise ceilings for regular players up to aiPursePerSlot
+    if (aiPursePerSlot >= 1400) {
+      if (isTopRemainingTarget || isTop7 || valuation.score >= 50 || isBestAvailableInPool) {
+        final surplusCeiling = min(safeMaxForStar, (aiPursePerSlot * 1.05).round());
+        dynamicCeiling = max(dynamicCeiling, surplusCeiling);
+      } else {
+        // Even for lower-ranked / value players, don't let opponent steal cheap when AI has excess funds!
+        final valueSurplusCeiling = min(safeMaxForStar, (aiPursePerSlot * 0.70).round());
+        dynamicCeiling = max(dynamicCeiling, valueSurplusCeiling);
+      }
+    }
+
+    // C. Dynamic Target Window Expansion & Critical Desperation:
+    // If opponent bought top stars and only lower ranked players remain, AI goes all-out for best remaining!
+    if (urgentSquadFill || isBestAvailableInPool) {
+      final desperationCeiling = min(safeMaxForStar, max((aiPursePerSlot * 1.35).round(), (valuation.baseCeiling * 2.0).round()));
+      dynamicCeiling = max(dynamicCeiling, desperationCeiling);
+    } else if (isTopRemainingTarget) {
+      final targetCeiling = min(safeMaxForStar, (aiPursePerSlot * 1.15).round());
+      dynamicCeiling = max(dynamicCeiling, targetCeiling);
+    }
+
+    // D. Top 7 Marquee Urgency Scaling:
     if (isTop7Urgency) {
-      // Calibrated hierarchy by score: Priyam (93) is highest at ₹3800, Ashutosh/Sangam (89) at ₹3500, Avinash (86) capped at ₹3000
       int targetTop7Base;
       if (score >= 90) {
         targetTop7Base = 3800; // Priyam (MVP)
@@ -233,37 +279,28 @@ class StayrareAiEngine {
       }
 
       if (input.yourPurseRemaining >= 6500) {
-        dynamicCeiling = max(dynamicCeiling, min(safeMaxForStar, targetTop7Base));
+        final scaledTop7Base = (targetTop7Base * max(1.0, purseScalingFactor).clamp(1.0, 1.4)).round();
+        dynamicCeiling = max(dynamicCeiling, min(safeMaxForStar, scaledTop7Base));
       }
 
-      // If scarce top-7 stars remain (e.g. need 2, only 2 left in pool), activate critical must-win bidding!
       if (top7RemainingInPool <= top7Needed) {
-        final mustWinCeiling = (targetTop7Base * 1.05).round();
+        final mustWinCeiling = (targetTop7Base * 1.10).round();
         dynamicCeiling = max(dynamicCeiling, min(safeMaxForStar, mustWinCeiling));
-      }
-    } else {
-      // Practical Purse-Depth Stretch for regular players
-      final aiPursePerSlot = input.yourPurseRemaining / max(1, remainingSlotsToFill);
-      if (brain.allowDynamicStretchAboveCeiling && aiPursePerSlot >= 1400 && score >= 65) {
-        final stretchRatio = score >= 85 ? (brain.dynamicPurseStretchRatio * 1.3) : brain.dynamicPurseStretchRatio;
-        dynamicCeiling = (dynamicCeiling * (1.0 + stretchRatio)).round();
       }
     }
 
     // Principle 1: Value over replacement, not raw score
-    // Check how many similar-tier players (within ±10 score) are still remaining in the pool
     final similarReplacements = input.playersRemainingList.where((p) {
       return p.name.toLowerCase() != valuation.name.toLowerCase() && (p.score - score).abs() <= 10;
     }).toList();
 
     var scarcityBoostApplied = false;
     if (similarReplacements.isEmpty && score >= 50 && !isEndgame) {
-      // LAST strong player of its tier left -> raise effective ceiling by scarcityMultiplier
       dynamicCeiling = (dynamicCeiling * brain.scarcityMultiplier).round();
       scarcityBoostApplied = true;
     }
 
-    // 85+ score top marquee pick stretch logic (max stretch picks per brain)
+    // 85+ score top marquee pick stretch logic
     var isStretching = false;
     if (score >= 85 && input.yourSquadCount < 3 && _stretchedPicksCount < brain.maxStretchPicks) {
       final stretchedCeiling = (dynamicCeiling * brain.marqueeStretchMultiplier).round();
@@ -275,7 +312,7 @@ class StayrareAiEngine {
 
     final currentBumps = _playerAiBumpsCount[valuation.name] ?? 0;
 
-    // Principle 2: Opponent pricing ceiling clamp - never pay more than necessary!
+    // Principle 2: Opponent pricing ceiling clamp
     final userWinThreshold = userRealisticMax + input.nextIncrement;
     if (input.currentBidLeader == 'user' && proposedBid > userWinThreshold && proposedBid > dynamicCeiling) {
       return AiBidDecision(
@@ -302,7 +339,7 @@ class StayrareAiEngine {
       );
     }
 
-    // Principle 4: Bluff occasionally on mid-tier players (40-60 score)
+    // Principle 4: Bluff occasionally on mid-tier players
     final isBluffCandidate = score >= 40 && score <= 60 && (_evaluationsCount % brain.bluffFrequency == 0) && currentBumps == 0 && input.currentBidLeader == 'user';
     if (isBluffCandidate && proposedBid <= (valuation.baseCeiling * brain.bluffCeilingFactor) && input.yourPurseRemaining >= 4000) {
       _playerAiBumpsCount[valuation.name] = currentBumps + 1;
@@ -324,8 +361,8 @@ class StayrareAiEngine {
       );
     }
 
-    // Principle 1 (Replacement count check): If $\ge 2$ similar replacements exist and bid is high, let go cheap (unless top-7 urgency!)
-    if (similarReplacements.length >= 2 && score < 70 && !urgentSquadFill && !isTop7Urgency) {
+    // Principle 1 (Replacement count check): If $\ge 2$ similar replacements exist and bid is high, let go cheap (unless top target / top-7 urgency!)
+    if (similarReplacements.length >= 2 && score < 70 && !urgentSquadFill && !isTop7Urgency && !isTopRemainingTarget && aiPursePerSlot < 1400) {
       if (proposedBid > (dynamicCeiling * 0.85) && currentBumps >= 1 && input.currentBidLeader == 'user') {
         return AiBidDecision(
           action: 'pass',
@@ -336,8 +373,8 @@ class StayrareAiEngine {
       }
     }
 
-    // Sub-40 score players -> let go cheap unless urgent squad fill
-    if (score < 40 && !urgentSquadFill) {
+    // Sub-40 score players -> let go cheap unless urgent squad fill or purse surplus
+    if (score < 40 && !urgentSquadFill && aiPursePerSlot < 1400) {
       if (!isEndgame && (proposedBid > 200 || currentBumps >= 1)) {
         return AiBidDecision(
           action: 'pass',
@@ -365,12 +402,12 @@ class StayrareAiEngine {
     }
 
     String strategyNote;
-    if (urgentSquadFill) {
-      strategyNote = 'Endgame squad fill: securing roster depth ($input.yourSquadCount/${input.targetSquadSize})';
+    if (scarcityBoostApplied) {
+      strategyNote = 'Scarcity premium (+18% ceiling): last available player in $score tier';
+    } else if (urgentSquadFill) {
+      strategyNote = 'Endgame squad fill: securing roster depth (${input.yourSquadCount}/${input.targetSquadSize})';
     } else if (isTop7Urgency) {
       strategyNote = 'Top 7 Marquee Priority ($aiTop7Count/${brain.top7TargetCount} stars acquired): Bidding aggressively up to ₹$dynamicCeiling';
-    } else if (scarcityBoostApplied) {
-      strategyNote = 'Scarcity premium (+18% ceiling): last available player in $score tier';
     } else if (isStretching) {
       strategyNote = 'Stretching ceiling up to 115% for elite marquee anchor';
     } else if (score >= 70) {
@@ -427,6 +464,7 @@ class StayrareAiEngine {
   }) {
     final valuation = StayrarePlayerDatabase.getValuationFor(playerName);
     final remainingSlots = max(1, targetSquadSize - aiSquadCount);
+    final aiPursePerSlot = aiPurseRemaining / remainingSlots;
     final reserveFloor = (remainingSlots - 1) * brain.squadReserveFloor;
     final maxCanSpend = max(0, aiPurseRemaining - reserveFloor);
 
@@ -434,11 +472,6 @@ class StayrareAiEngine {
       return currentBasePrice;
     }
 
-    // AI raises aggressively towards its valuation ceiling for quality players:
-    // Top 7 / Elite (score >= 80): 98% to 105% of maxCeiling
-    // High-tier (score 70-79): 90% to 98% of maxCeiling
-    // Solid (score 55-69): 80% to 90% of maxCeiling
-    // Base: 65% of maxCeiling
     final isTop7 = StayrarePlayerDatabase.isTop7Player(playerName);
     double targetFraction;
     if (isTop7 || valuation.score >= 85) {
@@ -448,10 +481,15 @@ class StayrareAiEngine {
     } else if (valuation.score >= 65) {
       targetFraction = 0.85;
     } else {
-      targetFraction = 0.65;
+      targetFraction = 0.70;
     }
 
-    int targetRaise = (valuation.maxCeiling * targetFraction).round();
+    final purseScaling = (aiPursePerSlot / 1200.0).clamp(0.7, 2.0);
+    int targetRaise = (valuation.maxCeiling * targetFraction * purseScaling).round();
+
+    if (aiPursePerSlot >= 1500 && (isTop7 || valuation.score >= 50)) {
+      targetRaise = max(targetRaise, (aiPursePerSlot * 0.95).round());
+    }
 
     // Round targetRaise to clean auction increments (nearest 50 or 100)
     if (targetRaise >= 1000) {
@@ -493,8 +531,12 @@ class StayrareAiEngine {
       if (purseAfter < (remainingSlots - 1) * brain.squadReserveFloor) return false;
     }
 
-    // AI will match up to rtmEliteMatchMargin of ceiling for 85+ score, or 100% for 75+
-    final limit = valuation.score >= 85 ? (valuation.maxCeiling * brain.rtmEliteMatchMargin) : valuation.maxCeiling.toDouble();
+    final aiPursePerSlot = aiPurseRemaining / max(1, remainingSlots);
+    final purseScaling = (aiPursePerSlot / 1200.0).clamp(0.7, 2.0);
+
+    final limit = valuation.score >= 85
+        ? (valuation.maxCeiling * brain.rtmEliteMatchMargin * purseScaling)
+        : max(valuation.maxCeiling * purseScaling, aiPursePerSlot * 0.95);
     return askedPrice <= limit;
   }
 

@@ -605,5 +605,78 @@ void main() {
       expect(priyamVal.adjustedRank, lessThanOrEqualTo(3)); // Priyam jumped massively from bottom to top 3
       expect(learner.totalAuctionsLearned, 2);
     });
+
+    test('When AI has ₹10,000 purse for 5 remaining slots, it scales ceiling up to ₹2,000 for average players', () {
+      final engine = StayrareAiEngine();
+      final alok = StayrarePlayerDatabase.getValuationFor('Alok'); // Mid / baseline player (score: 50)
+
+      // User has 2500, AI has 10000. Both at 5 players (5 slots needed).
+      // AI purse per slot = 10000 / 5 = 2000!
+      final decisionAt1250 = engine.decide(
+        AiDecisionInput(
+          player: alok.name,
+          currentBid: 1250,
+          currentBidLeader: 'user',
+          nextIncrement: 250,
+          yourPurseRemaining: 10000,
+          yourSquadCount: 5,
+          userPurseRemaining: 2500,
+          userSquadCount: 5,
+          playersRemainingInPool: 12,
+          playersRemainingList: StayrarePlayerDatabase.officialValuations,
+          targetSquadSize: 10,
+        ),
+      );
+
+      // AI should continue bidding at 1500 (instead of stopping at 1000)
+      expect(decisionAt1250.action, 'bid');
+      expect(decisionAt1250.amount, 1500);
+
+      final decisionAt1750 = engine.decide(
+        AiDecisionInput(
+          player: alok.name,
+          currentBid: 1750,
+          currentBidLeader: 'user',
+          nextIncrement: 250,
+          yourPurseRemaining: 10000,
+          yourSquadCount: 5,
+          userPurseRemaining: 2500,
+          userSquadCount: 5,
+          playersRemainingInPool: 12,
+          playersRemainingList: StayrarePlayerDatabase.officialValuations,
+          targetSquadSize: 10,
+        ),
+      );
+
+      // AI continues bidding up to 2000 because its purse per slot is 2000!
+      expect(decisionAt1750.action, 'bid');
+      expect(decisionAt1750.amount, 2000);
+    });
+
+    test('AI goes all-out for lower-ranked player (#19 ranked) when user bought top stars and pool is scarce', () {
+      final engine = StayrareAiEngine();
+      // Suppose only Mohan, Dev, Shaurya remain in pool, and AI needs 1 player to complete squad
+      final mohan = StayrarePlayerDatabase.getValuationFor('Mohan');
+
+      final decision = engine.decide(
+        AiDecisionInput(
+          player: mohan.name,
+          currentBid: 1200,
+          currentBidLeader: 'user',
+          nextIncrement: 250,
+          yourPurseRemaining: 4000,
+          yourSquadCount: 9, // Needs 1 player to reach 10!
+          userPurseRemaining: 1500,
+          userSquadCount: 9,
+          playersRemainingInPool: 2, // Pool is almost empty!
+          playersRemainingList: [mohan, StayrarePlayerDatabase.getValuationFor('Dev')],
+          targetSquadSize: 10,
+        ),
+      );
+
+      // AI must win this player to complete squad, so it bids 1450 even on a lower-ranked player!
+      expect(decision.action, 'bid');
+      expect(decision.amount, 1450);
+    });
   });
 }
