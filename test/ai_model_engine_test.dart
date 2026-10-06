@@ -533,6 +533,77 @@ void main() {
       final priyamInsight = insights.firstWhere((i) => i.playerName == 'Priyam');
       expect(priyamInsight.finalWinningPrice, 3600);
       expect(priyamInsight.newAuctionScore, greaterThanOrEqualTo(90));
+
+      final updatedRanks = learner.rankedPlayers;
+      expect(updatedRanks.first.name, 'Priyam');
+      expect(updatedRanks.first.adjustedRank, 1);
+      expect(updatedRanks.last.name, 'Dev');
+      expect(updatedRanks.last.adjustedRank, 22);
+    });
+
+    test('Rank fluctuation dynamically adapts after subsequent auctions', () {
+      final learner = StayrareAiLearner();
+      learner.resetToDefaults();
+
+      // Auction 1: Dev is sold for 3500 (high), Priyam sold for 200 (low)
+      final session1 = RecordedAuctionSession(
+        id: 'auction_1',
+        timestamp: DateTime.now(),
+        userTeamName: 'Danapur Dabangg',
+        aiTeamName: 'stayrare-model',
+        targetSquadSize: 10,
+        initialPurse: 12000,
+        userPurseRemaining: 100,
+        aiPurseRemaining: 100,
+        biddingProcess: [],
+        opponentProfile: OpponentAuctionProfile(
+          userTeamName: 'Danapur Dabangg',
+          totalUserBidsPlaced: 10,
+          totalUserSpent: 11900,
+          userJumpBidsPlaced: 1,
+          top7StarsAcquired: 1,
+          biddingStyle: 'Aggressive',
+          playerStudies: {},
+        ),
+        playerAuctionPrices: {'Dev': 3500, 'Priyam': 200, 'Ashutosh': 2400},
+      );
+
+      learner.learnFromCompletedAuction(session1);
+      var ranks = learner.rankedPlayers;
+      expect(ranks.first.name, 'Dev'); // Dev rises to #1
+      expect(ranks.first.adjustedRank, 1);
+      expect(ranks.first.compositeScore, greaterThan(65));
+
+      // Auction 2: Priyam is sold for 3800, Dev sold for 150
+      final session2 = RecordedAuctionSession(
+        id: 'auction_2',
+        timestamp: DateTime.now(),
+        userTeamName: 'Danapur Dabangg',
+        aiTeamName: 'stayrare-model',
+        targetSquadSize: 10,
+        initialPurse: 12000,
+        userPurseRemaining: 100,
+        aiPurseRemaining: 100,
+        biddingProcess: [],
+        opponentProfile: OpponentAuctionProfile(
+          userTeamName: 'Danapur Dabangg',
+          totalUserBidsPlaced: 10,
+          totalUserSpent: 11900,
+          userJumpBidsPlaced: 1,
+          top7StarsAcquired: 1,
+          biddingStyle: 'Aggressive',
+          playerStudies: {},
+        ),
+        playerAuctionPrices: {'Dev': 150, 'Priyam': 3800, 'Ashutosh': 2600},
+      );
+
+      learner.learnFromCompletedAuction(session2);
+      ranks = learner.rankedPlayers;
+      expect(ranks.first.name, 'Ashutosh'); // Ashutosh is consistent high earner (#1)
+      expect(ranks.first.adjustedRank, 1);
+      final priyamVal = ranks.firstWhere((p) => p.name == 'Priyam');
+      expect(priyamVal.adjustedRank, lessThanOrEqualTo(3)); // Priyam jumped massively from bottom to top 3
+      expect(learner.totalAuctionsLearned, 2);
     });
   });
 }
