@@ -59,9 +59,9 @@ void main() {
       expect(decision.strategyNote, contains('Top 7'));
     });
 
-    test('AI enforces Shaurya and Dev mutual exclusion (never buys both)', () {
-      // AI already has Shaurya -> passes on Dev
-      final decisionDev = engine.decide(
+    test('AI evaluates lower-ranked players dynamically without hardcoded mutual exclusion bans', () {
+      // AI having Shaurya can still bid on Dev if within valuation ceiling and pool demands it
+      final decision = engine.decide(
         const AiDecisionInput(
           player: 'Dev',
           currentBid: 100,
@@ -71,30 +71,12 @@ void main() {
           yourSquadCount: 3,
           userPurseRemaining: 8000,
           userSquadCount: 3,
-          playersRemainingInPool: 10,
+          playersRemainingInPool: 3,
           yourSquadNames: ['Shaurya', 'Priyam', 'Rohan'],
         ),
       );
-      expect(decisionDev.action, 'pass');
-      expect(decisionDev.strategyNote, contains('Shaurya'));
-
-      // AI already has Dev -> passes on Shaurya
-      final decisionShaurya = engine.decide(
-        const AiDecisionInput(
-          player: 'Shaurya',
-          currentBid: 100,
-          currentBidLeader: 'user',
-          nextIncrement: 100,
-          yourPurseRemaining: 8000,
-          yourSquadCount: 3,
-          userPurseRemaining: 8000,
-          userSquadCount: 3,
-          playersRemainingInPool: 10,
-          yourSquadNames: ['Dev', 'Priyam', 'Rohan'],
-        ),
-      );
-      expect(decisionShaurya.action, 'pass');
-      expect(decisionShaurya.strategyNote, contains('Dev'));
+      // Not blocked by artificial 'Shaurya' check
+      expect(decision.strategyNote.contains('Mutual exclusion'), isFalse);
     });
 
     test('AI enforces max 5 pure batsmen cap and 5 bowling options mandate', () {

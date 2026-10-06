@@ -129,25 +129,6 @@ class StayrareAiEngine {
       }
     }
 
-    // Rule: Shaurya & Dev Mutual Exclusion (No team wants both low-tier reserve picks)
-    final cleanPlayerName = valuation.name.trim().toLowerCase();
-    if (cleanPlayerName == 'dev' && input.yourSquadNames.any((n) => n.trim().toLowerCase() == 'shaurya')) {
-      return AiBidDecision(
-        action: 'pass',
-        amount: null,
-        strategyNote: 'Mutual exclusion: Already have Shaurya, passing on Dev to prevent low-tier surplus',
-        trashTalk: "Nice try! I already have my reserve depth. Dev is all yours.",
-      );
-    }
-    if (cleanPlayerName == 'shaurya' && input.yourSquadNames.any((n) => n.trim().toLowerCase() == 'dev')) {
-      return AiBidDecision(
-        action: 'pass',
-        amount: null,
-        strategyNote: 'Mutual exclusion: Already have Dev, passing on Shaurya to prevent low-tier surplus',
-        trashTalk: "Nice try! I already have Dev. Shaurya is all yours.",
-      );
-    }
-
     // Squad Role Constraints: Max 5 Pure Batsmen & Min 5 Bowling Options (Bowl + All-Rounder)
     final currentBatCount = input.yourRoleCounts[CricketRole.bat] ?? 0;
     final currentBowlCount = input.yourRoleCounts[CricketRole.bowl] ?? 0;
