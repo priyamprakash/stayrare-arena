@@ -220,8 +220,28 @@ class SoloAiAuctionSession extends ChangeNotifier {
     for (final p in playerPool) {
       playerStatusMap[p.name] = SoloPlayerStatus.pool;
     }
+    sessionId = 'auction_${DateTime.now().millisecondsSinceEpoch}_${userTeamName.replaceAll(' ', '_')}';
+    _syncLiveStateToFirestore();
 
     notifyListeners();
+  }
+
+  String sessionId = 'auction_${DateTime.now().millisecondsSinceEpoch}_my_team';
+
+  void _syncLiveStateToFirestore() {
+    firebaseService.recordLiveAuctionProgress(
+      sessionId: sessionId,
+      userTeamName: userTeamName,
+      aiTeamName: aiTeamName,
+      userPurse: userPurse,
+      aiPurse: aiPurse,
+      userSquadCount: userSquad.length,
+      aiSquadCount: aiSquad.length,
+      currentPlayerName: currentPlayerOnBlock?.name,
+      currentBid: currentBidAmount,
+      currentLeader: currentLeader == SoloBidLeader.user ? 'user' : (currentLeader == SoloBidLeader.ai ? 'ai' : 'none'),
+      recentBids: fullBiddingLog,
+    );
   }
 
   int get unassignedPlayersCount =>
@@ -415,6 +435,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
     timeoutCaller = null;
 
     _startTimer();
+    _syncLiveStateToFirestore();
     notifyListeners();
 
     // If Marquee star steps onto the block, trigger crowd gasp & Stayrare Owner opening sledge!
@@ -604,6 +625,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
         'trash_talk': trashTalk,
         'timestamp': DateTime.now().toIso8601String(),
       });
+      _syncLiveStateToFirestore();
     }
   }
 
@@ -1063,6 +1085,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
     );
 
     checkAuctionCompletion();
+    _syncLiveStateToFirestore();
     notifyListeners();
   }
 
@@ -1086,6 +1109,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
     );
 
     checkAuctionCompletion();
+    _syncLiveStateToFirestore();
     notifyListeners();
   }
 

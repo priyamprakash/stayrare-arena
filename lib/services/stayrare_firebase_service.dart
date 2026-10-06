@@ -264,6 +264,88 @@ class StayrareFirebaseService {
     return session;
   }
 
+  /// Synchronize all 22 player profiles and rankings into Firebase Firestore
+  Future<void> syncPlayerValuationsToFirestore(List<PlayerValuation> players) async {
+    for (final player in players) {
+      try {
+        final url = Uri.parse(
+          'https://firestore.googleapis.com/v1/projects/$firebaseProjectId/databases/(default)/documents/player_valuations/${player.name.toLowerCase()}',
+        );
+
+        final payload = {
+          'fields': {
+            'name': {'stringValue': player.name},
+            'score': {'integerValue': player.score.toString()},
+            'auction_score': {'integerValue': player.auctionScore.toString()},
+            'composite_score': {'integerValue': player.compositeScore.toString()},
+            'adjusted_rank': {'integerValue': player.adjustedRank.toString()},
+            'role': {'stringValue': player.role.shortCode},
+            'role_description': {'stringValue': player.roleDescription},
+            'min_ceiling': {'integerValue': player.minCeiling.toString()},
+            'max_ceiling': {'integerValue': player.maxCeiling.toString()},
+            'historical_avg_price': {'integerValue': player.historicalAvgPrice.toString()},
+            'times_auctioned': {'integerValue': player.timesAuctioned.toString()},
+            'last_updated': {'stringValue': DateTime.now().toIso8601String()},
+          }
+        };
+
+        await http
+            .patch(
+              url,
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode(payload),
+            )
+            .timeout(const Duration(seconds: 3));
+      } catch (_) {}
+    }
+  }
+
+  /// Live sync of auction state on every bid or sold player
+  Future<void> recordLiveAuctionProgress({
+    required String sessionId,
+    required String userTeamName,
+    required String aiTeamName,
+    required int userPurse,
+    required int aiPurse,
+    required int userSquadCount,
+    required int aiSquadCount,
+    required String? currentPlayerName,
+    required int currentBid,
+    required String currentLeader,
+    required List<Map<String, dynamic>> recentBids,
+  }) async {
+    try {
+      final url = Uri.parse(
+        'https://firestore.googleapis.com/v1/projects/$firebaseProjectId/databases/(default)/documents/live_auctions/$sessionId',
+      );
+
+      final payload = {
+        'fields': {
+          'session_id': {'stringValue': sessionId},
+          'user_team': {'stringValue': userTeamName},
+          'ai_team': {'stringValue': aiTeamName},
+          'user_purse': {'integerValue': userPurse.toString()},
+          'ai_purse': {'integerValue': aiPurse.toString()},
+          'user_squad_count': {'integerValue': userSquadCount.toString()},
+          'ai_squad_count': {'integerValue': aiSquadCount.toString()},
+          'current_player': {'stringValue': currentPlayerName ?? 'None'},
+          'current_bid': {'integerValue': currentBid.toString()},
+          'current_leader': {'stringValue': currentLeader},
+          'bids_count': {'integerValue': recentBids.length.toString()},
+          'last_active': {'stringValue': DateTime.now().toIso8601String()},
+        }
+      };
+
+      await http
+          .patch(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(payload),
+          )
+          .timeout(const Duration(seconds: 3));
+    } catch (_) {}
+  }
+
   Future<void> _uploadToFirebaseFirestore(RecordedAuctionSession session) async {
     try {
       final url = Uri.parse(
