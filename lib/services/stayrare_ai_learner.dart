@@ -79,8 +79,17 @@ class StayrareAiLearner extends ChangeNotifier {
   }
 
   /// Real-time learning whenever a single player is hammered down/sold during an auction
-  void recordPlayerSold(String playerName, int winningPrice) {
+  /// If [isCompetitive] is false (e.g. opponent squad full, purse depleted, or uncontested base buy),
+  /// the sale will not dilute the player's true market ranking or historical average.
+  void recordPlayerSold(String playerName, int winningPrice, {bool isCompetitive = true}) {
     final player = getPlayerValuation(playerName);
+
+    if (!isCompetitive) {
+      // Uncontested clearance / liquidation pick - preserve true market valuation
+      notifyListeners();
+      return;
+    }
+
     final n = player.timesAuctioned;
     final newAvg = ((player.historicalAvgPrice * n + winningPrice) / (n + 1)).round();
     player.historicalAvgPrice = newAvg;
@@ -135,35 +144,46 @@ class StayrareAiLearner extends ChangeNotifier {
       final player = getPlayerValuation(playerName);
       final oldScore = player.auctionScore;
       final oldRank = oldRanks[player.name] ?? 10;
-
-      // Calculate new historical average price with exponential smoothing (weighted towards recent)
-      final n = player.timesAuctioned;
-      final newAvg = ((player.historicalAvgPrice * n + winningPrice) / (n + 1)).round();
-      player.historicalAvgPrice = newAvg;
-      player.timesAuctioned = n + 1;
-
-      // Compute normalized Auction Score (0 - 100 based on price relative to top star purse benchmarks)
-      // ₹3800 = ~95-100 Auction Score, ₹2000 = ~70 Auction Score, ₹100 = ~5 Auction Score
-      final rawScore = ((newAvg / 3800.0) * 100).round().clamp(5, 99);
-      player.auctionScore = rawScore;
-
-      // Adaptively scale future auction ceilings according to learned market prices!
-      player.minCeiling = (newAvg * 0.85).round().clamp(100, 4000);
-      player.maxCeiling = (newAvg * 1.25).round().clamp(150, 4500);
-
-      // Opponent Study Insight Note
       final study = opponentStudies[playerName];
+
+      final bids = session.biddingProcess.where((b) => b['player'] == playerName).toList();
+      final isUncontestedClearance = session.biddingProcess.isNotEmpty &&
+          bids.length <= 1 &&
+          winningPrice <= 200 &&
+          (study == null || study.userBidCount <= 1);
+      final isCompetitive = !isUncontestedClearance;
+
       String note;
-      if (study != null && study.userBidCount > 2) {
-        if (study.userWon) {
-          note = 'Opponent aggressively pursued ${player.name} (Max bid ₹${study.userMaxBidPlaced}). Market demand elevated!';
-        } else {
-          note = 'Opponent pushed ${player.name} up to ₹${study.userMaxBidPlaced} before dropping out. AI extracted maximum purse!';
-        }
-      } else if (winningPrice <= 300) {
-        note = 'Low contestation; player acquired near base price.';
+      if (!isCompetitive) {
+        // Uncontested clearance / liquidation pick (e.g. opponent had 0 slots or depleted purse)
+        // Do NOT distort historical average or penalize ranking!
+        note = 'Uncontested squad clearance (Opponent squad full or purse depleted). Valuation & rank preserved.';
       } else {
-        note = 'Sold for ₹$winningPrice. Auction score calibrated.';
+        // Calculate new historical average price with exponential smoothing (weighted towards recent)
+        final n = player.timesAuctioned;
+        final newAvg = ((player.historicalAvgPrice * n + winningPrice) / (n + 1)).round();
+        player.historicalAvgPrice = newAvg;
+        player.timesAuctioned = n + 1;
+
+        // Compute normalized Auction Score (0 - 100 based on price relative to top star purse benchmarks)
+        final rawScore = ((newAvg / 3800.0) * 100).round().clamp(5, 99);
+        player.auctionScore = rawScore;
+
+        // Adaptively scale future auction ceilings according to learned market prices!
+        player.minCeiling = (newAvg * 0.85).round().clamp(100, 4000);
+        player.maxCeiling = (newAvg * 1.25).round().clamp(150, 4500);
+
+        if (study != null && study.userBidCount > 2) {
+          if (study.userWon) {
+            note = 'Opponent aggressively pursued ${player.name} (Max bid ₹${study.userMaxBidPlaced}). Market demand elevated!';
+          } else {
+            note = 'Opponent pushed ${player.name} up to ₹${study.userMaxBidPlaced} before dropping out. AI extracted maximum purse!';
+          }
+        } else if (winningPrice <= 300) {
+          note = 'Sold for ₹$winningPrice. Valuation calibrated.';
+        } else {
+          note = 'Sold for ₹$winningPrice. Auction score calibrated.';
+        }
       }
 
       final winner = (study?.userWon ?? false) ? session.userTeamName : session.aiTeamName;
@@ -198,6 +218,7 @@ class StayrareAiLearner extends ChangeNotifier {
       );
     }
 
+    StayrareFirebaseService().syncPlayerValuationsToFirestore(rankedPlayers);
     notifyListeners();
     return _latestAuctionInsights;
   }

@@ -1106,7 +1106,9 @@ class SoloAiAuctionSession extends ChangeNotifier {
       isUser: true,
     );
 
-    learnerService.recordPlayerSold(player.name, price);
+    final userBids = playerBidHistory[player.name] ?? [];
+    final isCompetitive = userBids.length > 1 || price > getBasePriceForPlayer(player) || viaRtm;
+    learnerService.recordPlayerSold(player.name, price, isCompetitive: isCompetitive);
     checkAuctionCompletion();
     _syncLiveStateToFirestore();
     notifyListeners();
@@ -1131,7 +1133,9 @@ class SoloAiAuctionSession extends ChangeNotifier {
       isUser: false,
     );
 
-    learnerService.recordPlayerSold(player.name, price);
+    final aiBids = playerBidHistory[player.name] ?? [];
+    final isCompetitive = aiBids.length > 1 || price > getBasePriceForPlayer(player) || viaRtm;
+    learnerService.recordPlayerSold(player.name, price, isCompetitive: isCompetitive);
     checkAuctionCompletion();
     _syncLiveStateToFirestore();
     notifyListeners();

@@ -731,5 +731,19 @@ void main() {
       expect(session.userSquad.last.valuation.name, unsoldPlayer.name);
       expect(session.playerStatusMap[unsoldPlayer.name], SoloPlayerStatus.soldUser);
     });
+
+    test('Uncontested clearance sales do not dilute player historical average price or rank', () {
+      final learner = StayrareAiLearner();
+      final playerBefore = learner.getPlayerValuation('Priyam');
+      final avgBefore = playerBefore.historicalAvgPrice;
+      final timesAuctionedBefore = playerBefore.timesAuctioned;
+
+      // When sold uncontested (isCompetitive: false)
+      learner.recordPlayerSold('Priyam', 100, isCompetitive: false);
+
+      final playerAfter = learner.getPlayerValuation('Priyam');
+      expect(playerAfter.historicalAvgPrice, avgBefore);
+      expect(playerAfter.timesAuctioned, timesAuctionedBefore);
+    });
   });
 }
