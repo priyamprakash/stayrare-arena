@@ -392,6 +392,25 @@ class HomeView extends StatelessWidget {
                                 ],
                               ),
                             ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.4)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.cloud_done_rounded, size: 10, color: Color(0xFF34D399)),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    'DB #1: ${StayrareAiLearner().rankedPlayers.isNotEmpty ? StayrareAiLearner().rankedPlayers.first.name : "Priyam"}',
+                                    style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: Color(0xFF6EE7B7)),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
 

@@ -313,6 +313,10 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
           _buildAuctioneerVoiceAnchorWidget(),
           const SizedBox(height: 12),
 
+          // 0.8 Live Firestore Player Rankings & Database Dashboard Bar
+          _buildLiveDatabaseRankingWidget(context),
+          const SizedBox(height: 12),
+
           // 1. Top Head-to-Head HUD Banner
           _buildMatchupHudBanner(),
           const SizedBox(height: 12),
@@ -854,6 +858,7 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
     final isUserLeading = _session.currentLeader == SoloBidLeader.user;
     final isAiLeading = _session.currentLeader == SoloBidLeader.ai;
     final stage = _session.gavelStage;
+    final val = _session.learnerService.getPlayerValuation(player.name);
 
     return Container(
       decoration: BoxDecoration(
@@ -1021,6 +1026,21 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
+                              color: val.adjustedRank == 1
+                                  ? const Color(0xFFF59E0B)
+                                  : (val.adjustedRank == 2
+                                      ? const Color(0xFF94A3B8)
+                                      : (val.adjustedRank == 3 ? const Color(0xFFD97706) : const Color(0xFF10B981))),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '👑 DB Rank #${val.adjustedRank}',
+                              style: const TextStyle(fontSize: 10, color: Colors.black87, fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
                             ),
@@ -1037,7 +1057,7 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                               border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.5)),
                             ),
                             child: Text(
-                              '🎯 Skill: ${player.score}',
+                              '🎯 Rating: ${val.compositeScore}/100',
                               style: const TextStyle(fontSize: 10, color: Color(0xFF6EE7B7), fontWeight: FontWeight.w800),
                             ),
                           ),
@@ -1049,8 +1069,19 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                               border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
                             ),
                             child: Text(
-                              '💰 Auction Score: ${player.auctionScore}',
+                              '💰 DB Avg: ₹${val.historicalAvgPrice}',
                               style: const TextStyle(fontSize: 10, color: Color(0xFFFCD34D), fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              val.timesAuctioned > 0 ? '${val.timesAuctioned}x Sold' : 'Baseline DB',
+                              style: const TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w700),
                             ),
                           ),
                         ],
@@ -1806,7 +1837,65 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
+
+          // Firestore DB Connection & Live Rankings Header Banner
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0D2A20), Color(0xFF164E3D)],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.cloud_done_rounded, color: Color(0xFF34D399), size: 16),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _session.learnerService.totalAuctionsLearned > 0
+                            ? 'FIRESTORE DB • ${_session.learnerService.totalAuctionsLearned} MATCHES LEARNED'
+                            : 'FIRESTORE DB • 22 PLAYERS SYNCED (BASELINE)',
+                        style: const TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF34D399),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const Text(
+                        'Dynamic Market Valuations & Ranks (#1 to #22)',
+                        style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFF59E0B),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  ),
+                  icon: const Icon(Icons.analytics_rounded, size: 14),
+                  label: const Text('Ranks Matrix', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900)),
+                  onPressed: () => _showValuationsSheet(context),
+                ),
+              ],
+            ),
+          ),
 
           // Accelerated Round Trigger Banner (if unassigned pool empty or unsold exist)
           if (_session.unsoldPlayersCount > 0 && !_session.isAcceleratedRound) ...[
@@ -1891,6 +1980,13 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                 final isUnsold = status == SoloPlayerStatus.unsold;
                 final isSoldUser = status == SoloPlayerStatus.soldUser;
                 final isAvailable = status == SoloPlayerStatus.pool || isUnsold;
+                final val = _session.learnerService.getPlayerValuation(player.name);
+                final isTop3 = val.adjustedRank <= 3;
+                final rankColor = val.adjustedRank == 1
+                    ? const Color(0xFFD97706)
+                    : (val.adjustedRank == 2
+                        ? const Color(0xFF64748B)
+                        : (val.adjustedRank == 3 ? const Color(0xFFB45309) : const Color(0xFF0D2A20)));
 
                 return Container(
                   decoration: BoxDecoration(
@@ -1899,23 +1995,55 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                     border: Border.all(color: isUnsold ? Colors.red.shade100 : Colors.grey.shade200),
                   ),
                   child: ListTile(
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: isUnsold
-                              ? [Colors.grey.shade600, Colors.grey.shade800]
-                              : [const Color(0xFF0D2A20), const Color(0xFF1B4D3E)],
+                    leading: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: isUnsold
+                                  ? [Colors.grey.shade600, Colors.grey.shade800]
+                                  : [const Color(0xFF0D2A20), const Color(0xFF1B4D3E)],
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              player.role.icon,
+                              style: const TextStyle(fontSize: 18),
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          player.role.icon,
-                          style: const TextStyle(fontSize: 18),
+                        Positioned(
+                          top: -3,
+                          left: -4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: isTop3 ? rankColor : const Color(0xFF0F172A),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.white, width: 1.2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.15),
+                                  blurRadius: 3,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              '#${val.adjustedRank}',
+                              style: const TextStyle(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                     title: Row(
                       children: [
@@ -1930,6 +2058,22 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                           child: Text(
                             '${player.role.icon} ${player.role.shortCode}',
                             style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Color(0xFF047857)),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: val.compositeScore >= 70 ? const Color(0xFFFEF3C7) : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            val.tierBadge,
+                            style: TextStyle(
+                              fontSize: 7.5,
+                              fontWeight: FontWeight.w900,
+                              color: val.compositeScore >= 70 ? const Color(0xFFD97706) : const Color(0xFF475569),
+                            ),
                           ),
                         ),
                         if (isUnsold || player.isMarqueeDefault) ...[
@@ -1952,9 +2096,36 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                         ],
                       ],
                     ),
-                    subtitle: Text(
-                      '${player.roleDescription} • Base Price: ₹${_session.getBasePriceForPlayer(player)}',
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 2.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${player.roleDescription} • Base: ₹${_session.getBasePriceForPlayer(player)}',
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Text(
+                                '📊 Rating: ${val.compositeScore}/100',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF047857)),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '•  Avg: ₹${val.historicalAvgPrice}',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFFB45309)),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '•  Sold: ${val.timesAuctioned > 0 ? "${val.timesAuctioned}x" : "Baseline"}',
+                                style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     trailing: isAvailable
                         ? (_session.nominatedNextPlayer?.name == player.name
@@ -2158,6 +2329,13 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
       itemBuilder: (context, index) {
         final bought = list[index];
         final player = bought.valuation;
+        final val = _session.learnerService.getPlayerValuation(player.name);
+        final isTop3 = val.adjustedRank <= 3;
+        final rankColor = val.adjustedRank == 1
+            ? const Color(0xFFD97706)
+            : (val.adjustedRank == 2
+                ? const Color(0xFF64748B)
+                : (val.adjustedRank == 3 ? const Color(0xFFB45309) : const Color(0xFF0D2A20)));
 
         return Container(
           decoration: BoxDecoration(
@@ -2167,13 +2345,33 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
           ),
           child: ListTile(
             dense: true,
-            leading: CircleAvatar(
-              radius: 14,
-              backgroundColor: color.withValues(alpha: 0.15),
-              child: Text(
-                player.role.icon,
-                style: const TextStyle(fontSize: 13),
-              ),
+            leading: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                CircleAvatar(
+                  radius: 15,
+                  backgroundColor: color.withValues(alpha: 0.15),
+                  child: Text(
+                    player.role.icon,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                Positioned(
+                  top: -2,
+                  left: -3,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: isTop3 ? rankColor : const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '#${val.adjustedRank}',
+                      style: const TextStyle(fontSize: 7.5, fontWeight: FontWeight.w900, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
             ),
             title: Row(
               children: [
@@ -2190,6 +2388,22 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                     style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Color(0xFF047857)),
                   ),
                 ),
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: val.compositeScore >= 70 ? const Color(0xFFFEF3C7) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    val.tierBadge,
+                    style: TextStyle(
+                      fontSize: 7.5,
+                      fontWeight: FontWeight.w900,
+                      color: val.compositeScore >= 70 ? const Color(0xFFD97706) : const Color(0xFF475569),
+                    ),
+                  ),
+                ),
                 if (bought.viaRtm) ...[
                   const SizedBox(width: 6),
                   Container(
@@ -2200,7 +2414,10 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                 ],
               ],
             ),
-            subtitle: Text(player.roleDescription, style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+            subtitle: Text(
+              '${player.roleDescription} • Rating: ${val.compositeScore}/100 • DB Avg: ₹${val.historicalAvgPrice}',
+              style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+            ),
             trailing: Text(
               '₹${bought.price}',
               style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: color),
@@ -3285,6 +3502,188 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                     ),
                   ),
                 ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLiveDatabaseRankingWidget(BuildContext context) {
+    return ListenableBuilder(
+      listenable: _session.learnerService,
+      builder: (context, _) {
+        final ranked = _session.learnerService.rankedPlayers;
+        final totalLearned = _session.learnerService.totalAuctionsLearned;
+        final topPlayers = ranked.take(7).toList();
+
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Database Status Strip
+              InkWell(
+                onTap: () => _showValuationsSheet(context),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0D2A20),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFF10B981),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            totalLearned > 0
+                                ? 'FIRESTORE DB • LEARNED FROM $totalLearned MATCHES'
+                                : 'FIRESTORE DB • 22 PROFILES (BASELINE)',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF34D399),
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Row(
+                        children: [
+                          Text(
+                            'View 22 Ranks',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFFF59E0B),
+                            ),
+                          ),
+                          SizedBox(width: 2),
+                          Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFFF59E0B)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Horizontal Leaderboard Scrollable Strip
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.leaderboard_rounded, size: 14, color: Color(0xFFD97706)),
+                            SizedBox(width: 5),
+                            Text(
+                              'AI Market Ranks & Valuation Leaderboard',
+                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w900, color: Color(0xFF0F172A)),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          '${ranked.length} Players Synced',
+                          style: TextStyle(fontSize: 9.5, color: Colors.grey.shade600, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: topPlayers.map((p) {
+                          final isTop3 = p.adjustedRank <= 3;
+                          final medal = p.adjustedRank == 1
+                              ? '🥇'
+                              : (p.adjustedRank == 2 ? '🥈' : (p.adjustedRank == 3 ? '🥉' : '#${p.adjustedRank}'));
+                          final rankColor = p.adjustedRank == 1
+                              ? const Color(0xFFD97706)
+                              : (p.adjustedRank == 2
+                                  ? const Color(0xFF475569)
+                                  : (p.adjustedRank == 3 ? const Color(0xFFB45309) : const Color(0xFF0D2A20)));
+
+                          return InkWell(
+                            onTap: () => _showValuationsSheet(context),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: isTop3 ? rankColor.withValues(alpha: 0.08) : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isTop3 ? rankColor.withValues(alpha: 0.35) : Colors.grey.shade200,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(medal, style: TextStyle(fontSize: isTop3 ? 14 : 11, fontWeight: FontWeight.w900)),
+                                  const SizedBox(width: 6),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            p.name,
+                                            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 11, color: Color(0xFF0F172A)),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(p.role.icon, style: const TextStyle(fontSize: 9)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        'Rating ${p.compositeScore} • ₹${p.historicalAvgPrice}',
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w700,
+                                          color: isTop3 ? rankColor : const Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
