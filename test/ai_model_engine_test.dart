@@ -13,42 +13,28 @@ void main() {
     late StayrareAiEngine engine;
 
     setUp(() {
+      StayrareAiLearner().resetToDefaults();
       engine = StayrareAiEngine();
     });
 
-    test('Valuations database matches exact user specifications', () {
+    test('Valuations database initializes with 22 player profiles at equal mid baseline', () {
       final priyam = StayrarePlayerDatabase.getValuationFor('Priyam');
-      expect(priyam.score, 93);
-      expect(priyam.minCeiling, 3000);
-      expect(priyam.maxCeiling, 3800);
+      expect(priyam.score, 50);
+      expect(priyam.auctionScore, 50);
+      expect(priyam.historicalAvgPrice, 1200);
       expect(priyam.role, CricketRole.allRounder);
 
       final ashutosh = StayrarePlayerDatabase.getValuationFor('Ashutosh');
-      expect(ashutosh.score, 89);
-      expect(ashutosh.maxCeiling, 3500);
+      expect(ashutosh.score, 50);
       expect(ashutosh.role, CricketRole.allRounder);
 
       final avinash = StayrarePlayerDatabase.getValuationFor('Avinash');
-      expect(avinash.score, 86);
-      expect(avinash.maxCeiling, 3000);
+      expect(avinash.score, 50);
       expect(avinash.role, CricketRole.allRounder);
 
-      // Verify Priyam is valued higher than Avinash
-      expect(priyam.maxCeiling, greaterThan(avinash.maxCeiling));
-
-      final rahul = StayrarePlayerDatabase.getValuationFor('Rahul');
-      expect(rahul.score, 68);
-      expect(rahul.maxCeiling, 2400);
-      expect(rahul.role, CricketRole.bat);
-
       final dev = StayrarePlayerDatabase.getValuationFor('Dev');
-      expect(dev.score, 5);
-      expect(dev.minCeiling, 100);
+      expect(dev.score, 50);
       expect(dev.role, CricketRole.bat);
-
-      final amit = StayrarePlayerDatabase.getValuationFor('Amit');
-      expect(amit.score, 50);
-      expect(amit.minCeiling, 750);
     });
 
     test('AI bids aggressively above 1750 on Rahul when top 7 star is needed and purse is available', () {
@@ -190,22 +176,73 @@ void main() {
       expect(session.canUserBid, isTrue);
     });
 
-    test('Marquee players (Priyam, Ashutosh, Sangam, Avinash, Saurabh, Sunny, Rahul) are drawn first', () {
+    test('Auction #1 draws randomly; subsequent auctions draw learned top-ranked stars first', () {
       final session = SoloAiAuctionSession();
-      // Draw first 7 players
+      expect(session.learnerService.hasLearnedData, isFalse);
+
+      // In cold start (Auction #1), players are drawn randomly from pool
+      session.drawNextRandomPlayer();
+      expect(session.currentPlayerOnBlock, isNotNull);
+
+      // Now simulate learner acquiring auction data
+      final mockSession = RecordedAuctionSession(
+        id: 'auction_mock',
+        timestamp: DateTime.now(),
+        userTeamName: 'Danapur Dabangg',
+        aiTeamName: 'stayrare-model',
+        targetSquadSize: 10,
+        initialPurse: 12000,
+        userPurseRemaining: 100,
+        aiPurseRemaining: 200,
+        biddingProcess: [],
+        opponentProfile: OpponentAuctionProfile(
+          userTeamName: 'Danapur Dabangg',
+          totalUserBidsPlaced: 10,
+          totalUserSpent: 11900,
+          userJumpBidsPlaced: 1,
+          top7StarsAcquired: 4,
+          biddingStyle: 'Star Hunter',
+          playerStudies: {},
+        ),
+        playerAuctionPrices: {
+          'Priyam': 3600,
+          'Ashutosh': 3200,
+          'Sangam': 3000,
+          'Avinash': 2900,
+          'Saurabh': 2800,
+          'Sunny': 2500,
+          'Rahul': 2200,
+        },
+      );
+      session.learnerService.learnFromCompletedAuction(mockSession);
+      expect(session.learnerService.hasLearnedData, isTrue);
+
+      // Start new auction session after learning
+      final session2 = SoloAiAuctionSession();
+      // Draw first 7 players -> should be top ranked players
       for (int i = 0; i < 7; i++) {
-        session.drawNextRandomPlayer();
-        final current = session.currentPlayerOnBlock!;
-        expect(current.isMarqueeDefault || current.score >= 68, isTrue,
-            reason: 'Drawn player ${current.name} (score ${current.score}) should be a marquee player');
-        session.userMarkUnsold();
+        session2.drawNextRandomPlayer();
+        final current = session2.currentPlayerOnBlock!;
+        expect(current.compositeScore >= 60 || current.adjustedRank <= 7, isTrue,
+            reason: 'Drawn player ${current.name} (rank ${current.adjustedRank}) should be a top star after learning');
+        session2.userMarkUnsold();
       }
     });
 
     test('AI passes on opening bid for low-tier players when stars remain in pool', () {
+      final lowTierValuation = PlayerValuation(
+        name: 'Dev',
+        role: CricketRole.bat,
+        score: 30, // Low tier
+        auctionScore: 30,
+        adjustedRank: 20,
+        minCeiling: 200,
+        maxCeiling: 400,
+      );
+
       final decision = engine.decide(
         AiDecisionInput(
-          player: 'Dev', // score 5
+          player: 'Dev',
           currentBid: 0,
           currentBidLeader: 'none',
           nextIncrement: 100,
@@ -214,7 +251,7 @@ void main() {
           userPurseRemaining: 12000,
           userSquadCount: 0,
           playersRemainingInPool: 20,
-          playersRemainingList: StayrarePlayerDatabase.officialValuations,
+          playersRemainingList: [lowTierValuation, ...StayrarePlayerDatabase.officialValuations],
         ),
       );
 
@@ -297,16 +334,25 @@ void main() {
 
     test('Accelerated Round slashes base prices by 40%', () {
       final session = SoloAiAuctionSession();
-      final marquee = session.playerPool.firstWhere((p) => p.name == 'Priyam');
-      final regular = session.playerPool.firstWhere((p) => p.name == 'Dev');
+      final coldPlayer = session.playerPool.firstWhere((p) => p.name == 'Dev');
 
-      expect(session.getBasePriceForPlayer(marquee), 500);
-      expect(session.getBasePriceForPlayer(regular), 100);
+      // Cold start: default base price is 100
+      expect(session.getBasePriceForPlayer(coldPlayer), 100);
 
       session.startAcceleratedRound();
       expect(session.isAcceleratedRound, isTrue);
-      expect(session.getBasePriceForPlayer(marquee), 300); // 40% off 500
-      expect(session.getBasePriceForPlayer(regular), 50); // 50% / 40% off 100
+      expect(session.getBasePriceForPlayer(coldPlayer), 50); // 50% discount on 100
+
+      // For marquee/learned stars, 500 becomes 300
+      final marqueePlayer = PlayerValuation(
+        name: 'Priyam',
+        score: 90,
+        auctionScore: 90,
+        minCeiling: 2800,
+        maxCeiling: 3400,
+        isMarqueeDefault: true,
+      );
+      expect(session.getBasePriceForPlayer(marqueePlayer), 300);
     });
 
     test('Squad Role Mandates track 3 roles (BAT, BOWL, AR) without WK', () {
@@ -320,9 +366,17 @@ void main() {
     });
 
     test('Principle 1 & JSON: Scarcity boost and strict JSON serialization', () {
+      final starPlayer = PlayerValuation(
+        name: 'Priyam',
+        score: 93,
+        auctionScore: 95,
+        minCeiling: 2800,
+        maxCeiling: 3400,
+      );
+
       final decision = engine.decide(
-        const AiDecisionInput(
-          player: 'Priyam', // 93 score
+        AiDecisionInput(
+          player: 'Priyam',
           currentBid: 2400,
           currentBidLeader: 'user',
           nextIncrement: 250,
@@ -331,8 +385,8 @@ void main() {
           userPurseRemaining: 10000,
           userSquadCount: 1,
           playersRemainingInPool: 10,
-          playersRemainingList: [], // 0 similar 85+ players left in pool!
-          yourSquadNames: ['Ashutosh', 'Sangam', 'Saurabh'], // Already has 3 top 7 stars
+          playersRemainingList: [starPlayer], // 0 similar 85+ players left in pool!
+          yourSquadNames: const ['Ashutosh', 'Sangam', 'Saurabh'],
         ),
       );
 
@@ -400,7 +454,7 @@ void main() {
       expect(opinion.contains('520'), isFalse);
     });
 
-    test('AI raises RTM price strategically near player valuation ceiling on marquee players like Avinash', () {
+    test('AI raises RTM price strategically up to valuation ceiling (cold ₹1400, learned up to ₹3000)', () {
       final session = SoloAiAuctionSession();
       final avinash = StayrarePlayerDatabase.getValuationFor('Avinash');
       session.currentPlayerOnBlock = avinash;
@@ -414,24 +468,23 @@ void main() {
       session.rtmBasePrice = 500;
       session.userInvokeRtm();
 
-      // Verify AI raised the price aggressively towards Avinash's ceiling (~3000), NOT just 600
-      expect(session.rtmRaisedPrice, greaterThanOrEqualTo(2500));
-      expect(session.rtmRaisedPrice, lessThanOrEqualTo(3000));
+      // In cold start baseline, AI raises towards Avinash's maxCeiling (1400)
+      expect(session.rtmRaisedPrice, greaterThanOrEqualTo(1000));
+      expect(session.rtmRaisedPrice, lessThanOrEqualTo(1400));
       expect(session.rtmPhase, SoloRtmPhase.userRaisingPrice);
     });
 
-    test('SoloAiAuctionSession initializes with 11-person squad target for Full Playing XI', () {
+    test('SoloAiAuctionSession initializes with 10-person squad target', () {
       final session = SoloAiAuctionSession();
-      expect(session.targetSquadSize, 11);
+      expect(session.targetSquadSize, 10);
       expect(session.playerPool.length, 22);
     });
 
     test('PlayerValuation computes compositeScore combining skill (60%) and auctionScore (40%)', () {
       final priyam = StayrarePlayerDatabase.getValuationFor('Priyam');
-      expect(priyam.score, 93);
-      expect(priyam.auctionScore, 95);
-      // (93 * 0.6) + (95 * 0.4) = 55.8 + 38.0 = 93.8 -> 94
-      expect(priyam.compositeScore, 94);
+      expect(priyam.score, 50);
+      expect(priyam.auctionScore, 50);
+      expect(priyam.compositeScore, 50);
     });
 
     test('StayrareAiLearner dynamically recalculates player auctionScore and rankings', () {

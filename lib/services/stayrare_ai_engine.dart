@@ -1,6 +1,7 @@
 import 'dart:math';
 import '../models/ai_model_valuation.dart';
 import 'ai_brain_loader.dart';
+import 'stayrare_ai_learner.dart';
 
 class AiDecisionInput {
   final String player;
@@ -77,7 +78,10 @@ class StayrareAiEngine {
   /// Evaluates whether the AI Rival Owner raises the bid or passes based on 8 Strategic Principles
   AiBidDecision decide(AiDecisionInput input) {
     _evaluationsCount++;
-    final valuation = StayrarePlayerDatabase.getValuationFor(input.player);
+    final valuation = input.playersRemainingList.firstWhere(
+      (p) => p.name.trim().toLowerCase() == input.player.trim().toLowerCase(),
+      orElse: () => StayrareAiLearner().getPlayerValuation(input.player),
+    );
     final score = valuation.score;
     final isOpening = input.currentBidLeader == 'none' || input.currentBid == 0;
     final basePrice = input.isAcceleratedRound

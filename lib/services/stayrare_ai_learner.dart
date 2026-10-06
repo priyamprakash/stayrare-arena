@@ -34,6 +34,7 @@ class StayrareAiLearner extends ChangeNotifier {
   final Map<String, PlayerValuation> _learnedDatabase = {};
   final List<LearnedAuctionInsight> _latestAuctionInsights = [];
   int totalAuctionsLearned = 0;
+  bool get hasLearnedData => totalAuctionsLearned > 0;
 
   List<PlayerValuation> get rankedPlayers {
     final list = _learnedDatabase.values.toList();
@@ -52,6 +53,13 @@ class StayrareAiLearner extends ChangeNotifier {
       _learnedDatabase[p.name.toLowerCase()] = p;
     }
     _recalculateRankings();
+  }
+
+  void resetToDefaults() {
+    totalAuctionsLearned = 0;
+    _latestAuctionInsights.clear();
+    _initLearnedValuations();
+    notifyListeners();
   }
 
   PlayerValuation getPlayerValuation(String name) {
@@ -96,6 +104,10 @@ class StayrareAiLearner extends ChangeNotifier {
       // ₹3800 = ~95-100 Auction Score, ₹2000 = ~70 Auction Score, ₹100 = ~5 Auction Score
       final rawScore = ((newAvg / 3800.0) * 100).round().clamp(5, 99);
       player.auctionScore = rawScore;
+
+      // Adaptively scale future auction ceilings according to learned market prices!
+      player.minCeiling = (newAvg * 0.85).round().clamp(100, 4000);
+      player.maxCeiling = (newAvg * 1.25).round().clamp(150, 4500);
 
       // Opponent Study Insight Note
       final study = opponentStudies[playerName];

@@ -29,99 +29,99 @@
   "player_valuations": [
     {
       "name": "Priyam",
-      "score": 93,
-      "min_ceiling": 3000,
-      "max_ceiling": 3800,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "allRounder",
       "role_description": "Explosive All-Rounder & Striker",
-      "is_marquee": true
+      "is_marquee": false
     },
     {
       "name": "Ashutosh",
-      "score": 89,
-      "min_ceiling": 2750,
-      "max_ceiling": 3500,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "allRounder",
       "role_description": "Bowling All-Rounder & Seamer",
-      "is_marquee": true
+      "is_marquee": false
     },
     {
       "name": "Sangam",
-      "score": 89,
-      "min_ceiling": 2750,
-      "max_ceiling": 3500,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "allRounder",
       "role_description": "Batting All-Rounder & Striker",
-      "is_marquee": true
+      "is_marquee": false
     },
     {
       "name": "Avinash",
-      "score": 86,
-      "min_ceiling": 2500,
-      "max_ceiling": 3000,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "allRounder",
       "role_description": "Anchor Batter & All-Rounder",
-      "is_marquee": true
+      "is_marquee": false
     },
     {
       "name": "Saurabh",
-      "score": 82,
-      "min_ceiling": 2200,
-      "max_ceiling": 2750,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "allRounder",
       "role_description": "Clutch Finisher & All-Rounder",
-      "is_marquee": true
+      "is_marquee": false
     },
     {
       "name": "Sunny",
-      "score": 75,
-      "min_ceiling": 2000,
-      "max_ceiling": 2500,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bat",
       "role_description": "Dynamic Middle-Order Gun",
-      "is_marquee": true
+      "is_marquee": false
     },
     {
       "name": "Rahul",
-      "score": 68,
-      "min_ceiling": 1900,
-      "max_ceiling": 2400,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bat",
       "role_description": "Dependable Anchor Batsman",
-      "is_marquee": true
+      "is_marquee": false
     },
     {
       "name": "Ritesh",
-      "score": 61,
-      "min_ceiling": 1250,
-      "max_ceiling": 1250,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "allRounder",
       "role_description": "Batting All-Rounder",
       "is_marquee": false
     },
     {
       "name": "Aman",
-      "score": 59,
-      "min_ceiling": 1250,
-      "max_ceiling": 1250,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "allRounder",
       "role_description": "Wicket-Taker & Quick Run Getter",
       "is_marquee": false
     },
     {
       "name": "Ikschit",
-      "score": 57,
-      "min_ceiling": 1250,
-      "max_ceiling": 1250,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bat",
       "role_description": "Reliable Squad Batter",
       "is_marquee": false
     },
     {
       "name": "Alok",
-      "score": 55,
-      "min_ceiling": 1250,
-      "max_ceiling": 1250,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bowl",
       "role_description": "Steady Seamer & Utility Bowler",
       "is_marquee": false
@@ -129,8 +129,8 @@
     {
       "name": "Amit",
       "score": 50,
-      "min_ceiling": 750,
-      "max_ceiling": 750,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bat",
       "role_description": "Reliable Middle-Order Batter",
       "is_marquee": false
@@ -138,89 +138,89 @@
     {
       "name": "Tinku",
       "score": 50,
-      "min_ceiling": 750,
-      "max_ceiling": 750,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bowl",
       "role_description": "Pinch Hitter & Bowler",
       "is_marquee": false
     },
     {
       "name": "Mohan",
-      "score": 45,
-      "min_ceiling": 750,
-      "max_ceiling": 750,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bowl",
       "role_description": "Death Overs Specialist",
       "is_marquee": false
     },
     {
       "name": "Piyush",
-      "score": 45,
-      "min_ceiling": 750,
-      "max_ceiling": 750,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bowl",
       "role_description": "Solid Field & Swing Bowler",
       "is_marquee": false
     },
     {
       "name": "Rohan",
-      "score": 41,
-      "min_ceiling": 500,
-      "max_ceiling": 500,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bat",
       "role_description": "Middle-Order Support Batter",
       "is_marquee": false
     },
     {
       "name": "Satish",
-      "score": 41,
-      "min_ceiling": 500,
-      "max_ceiling": 500,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bowl",
       "role_description": "Pure Line & Length Bowler",
       "is_marquee": false
     },
     {
       "name": "Niranjan",
-      "score": 30,
-      "min_ceiling": 300,
-      "max_ceiling": 300,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bat",
       "role_description": "Backup Squad Batter",
       "is_marquee": false
     },
     {
       "name": "Mohit",
-      "score": 25,
-      "min_ceiling": 300,
-      "max_ceiling": 300,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bat",
       "role_description": "Emerging Batter",
       "is_marquee": false
     },
     {
       "name": "Shaurya",
-      "score": 16,
-      "min_ceiling": 200,
-      "max_ceiling": 200,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bat",
       "role_description": "Late-Order Reserve",
       "is_marquee": false
     },
     {
       "name": "Aashish",
-      "score": 11,
-      "min_ceiling": 200,
-      "max_ceiling": 200,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bat",
       "role_description": "Squad Depth Specialist",
       "is_marquee": false
     },
     {
       "name": "Dev",
-      "score": 5,
-      "min_ceiling": 100,
-      "max_ceiling": 100,
+      "score": 50,
+      "min_ceiling": 1000,
+      "max_ceiling": 1400,
       "role": "bat",
       "role_description": "Base Entry Player",
       "is_marquee": false

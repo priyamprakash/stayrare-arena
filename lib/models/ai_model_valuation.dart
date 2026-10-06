@@ -16,8 +16,8 @@ class PlayerValuation {
   int historicalAvgPrice; // Historical average winning price in ₹
   int timesAuctioned; // Number of recorded auctions
   int adjustedRank; // Dynamic composite rank
-  final int minCeiling;
-  final int maxCeiling;
+  int minCeiling;
+  int maxCeiling;
   final String roleDescription;
   final CricketRole role;
   final bool isMarqueeDefault;
@@ -38,6 +38,8 @@ class PlayerValuation {
         historicalAvgPrice = historicalAvgPrice ?? ((minCeiling + maxCeiling) ~/ 2);
 
   int get baseCeiling => (minCeiling + maxCeiling) ~/ 2;
+
+  bool get isMarquee => isMarqueeDefault || compositeScore >= 70 || (timesAuctioned > 0 && adjustedRank > 0 && adjustedRank <= 7);
 
   /// Composite ranking score combining baseline player skill (60%) and real auction market demand (40%)
   int get compositeScore => ((score * 0.6) + (auctionScore * 0.4)).round();
@@ -142,28 +144,28 @@ class StayrarePlayerDatabase {
   }
 
   static List<PlayerValuation> get officialValuations => [
-        PlayerValuation(name: 'Priyam', score: 93, auctionScore: 95, historicalAvgPrice: 3400, minCeiling: 3000, maxCeiling: 3800, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Explosive All-Rounder & Striker'),
-        PlayerValuation(name: 'Ashutosh', score: 89, auctionScore: 90, historicalAvgPrice: 3100, minCeiling: 2750, maxCeiling: 3500, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Bowling All-Rounder & Seamer'),
-        PlayerValuation(name: 'Sangam', score: 89, auctionScore: 90, historicalAvgPrice: 3100, minCeiling: 2750, maxCeiling: 3500, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Batting All-Rounder & Striker'),
-        PlayerValuation(name: 'Avinash', score: 86, auctionScore: 84, historicalAvgPrice: 2750, minCeiling: 2500, maxCeiling: 3000, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Anchor Batter & All-Rounder'),
-        PlayerValuation(name: 'Saurabh', score: 82, auctionScore: 80, historicalAvgPrice: 2450, minCeiling: 2200, maxCeiling: 2750, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Clutch Finisher & All-Rounder'),
-        PlayerValuation(name: 'Sunny', score: 75, auctionScore: 74, historicalAvgPrice: 2250, minCeiling: 2000, maxCeiling: 2500, isMarqueeDefault: true, role: CricketRole.bat, roleDescription: 'Dynamic Middle-Order Gun'),
-        PlayerValuation(name: 'Rahul', score: 68, auctionScore: 70, historicalAvgPrice: 2150, minCeiling: 1900, maxCeiling: 2400, isMarqueeDefault: true, role: CricketRole.bat, roleDescription: 'Dependable Anchor Batsman'),
-        PlayerValuation(name: 'Ritesh', score: 61, auctionScore: 60, historicalAvgPrice: 1250, minCeiling: 1250, maxCeiling: 1250, role: CricketRole.allRounder, roleDescription: 'Batting All-Rounder'),
-        PlayerValuation(name: 'Aman', score: 59, auctionScore: 58, historicalAvgPrice: 1250, minCeiling: 1250, maxCeiling: 1250, role: CricketRole.allRounder, roleDescription: 'Wicket-Taker & Quick Run Getter'),
-        PlayerValuation(name: 'Ikschit', score: 57, auctionScore: 56, historicalAvgPrice: 1250, minCeiling: 1250, maxCeiling: 1250, role: CricketRole.bat, roleDescription: 'Reliable Squad Batter'),
-        PlayerValuation(name: 'Alok', score: 55, auctionScore: 54, historicalAvgPrice: 1250, minCeiling: 1250, maxCeiling: 1250, role: CricketRole.bowl, roleDescription: 'Steady Seamer & Utility Bowler'),
-        PlayerValuation(name: 'Amit', score: 50, auctionScore: 48, historicalAvgPrice: 750, minCeiling: 750, maxCeiling: 750, role: CricketRole.bat, roleDescription: 'Reliable Middle-Order Batter'),
-        PlayerValuation(name: 'Tinku', score: 50, auctionScore: 48, historicalAvgPrice: 750, minCeiling: 750, maxCeiling: 750, role: CricketRole.bowl, roleDescription: 'Pinch Hitter & Bowler'),
-        PlayerValuation(name: 'Mohan', score: 45, auctionScore: 44, historicalAvgPrice: 750, minCeiling: 750, maxCeiling: 750, role: CricketRole.bowl, roleDescription: 'Death Overs Specialist'),
-        PlayerValuation(name: 'Piyush', score: 45, auctionScore: 44, historicalAvgPrice: 750, minCeiling: 750, maxCeiling: 750, role: CricketRole.bowl, roleDescription: 'Solid Field & Swing Bowler'),
-        PlayerValuation(name: 'Rohan', score: 41, auctionScore: 38, historicalAvgPrice: 500, minCeiling: 500, maxCeiling: 500, role: CricketRole.bat, roleDescription: 'Middle-Order Support Batter'),
-        PlayerValuation(name: 'Satish', score: 41, auctionScore: 38, historicalAvgPrice: 500, minCeiling: 500, maxCeiling: 500, role: CricketRole.bowl, roleDescription: 'Pure Line & Length Bowler'),
-        PlayerValuation(name: 'Niranjan', score: 30, auctionScore: 28, historicalAvgPrice: 300, minCeiling: 300, maxCeiling: 300, role: CricketRole.bat, roleDescription: 'Backup Squad Batter'),
-        PlayerValuation(name: 'Mohit', score: 25, auctionScore: 24, historicalAvgPrice: 300, minCeiling: 300, maxCeiling: 300, role: CricketRole.bat, roleDescription: 'Emerging Batter'),
-        PlayerValuation(name: 'Shaurya', score: 16, auctionScore: 16, historicalAvgPrice: 200, minCeiling: 200, maxCeiling: 200, role: CricketRole.bat, roleDescription: 'Late-Order Reserve'),
-        PlayerValuation(name: 'Aashish', score: 11, auctionScore: 12, historicalAvgPrice: 200, minCeiling: 200, maxCeiling: 200, role: CricketRole.bat, roleDescription: 'Squad Depth Specialist'),
-        PlayerValuation(name: 'Dev', score: 5, auctionScore: 5, historicalAvgPrice: 100, minCeiling: 100, maxCeiling: 100, role: CricketRole.bat, roleDescription: 'Base Entry Player'),
+        PlayerValuation(name: 'Priyam', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.allRounder, roleDescription: 'Explosive All-Rounder & Striker'),
+        PlayerValuation(name: 'Ashutosh', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.allRounder, roleDescription: 'Bowling All-Rounder & Seamer'),
+        PlayerValuation(name: 'Sangam', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.allRounder, roleDescription: 'Batting All-Rounder & Striker'),
+        PlayerValuation(name: 'Avinash', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.allRounder, roleDescription: 'Anchor Batter & All-Rounder'),
+        PlayerValuation(name: 'Saurabh', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.allRounder, roleDescription: 'Clutch Finisher & All-Rounder'),
+        PlayerValuation(name: 'Sunny', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bat, roleDescription: 'Dynamic Middle-Order Gun'),
+        PlayerValuation(name: 'Rahul', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bat, roleDescription: 'Dependable Anchor Batsman'),
+        PlayerValuation(name: 'Ritesh', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.allRounder, roleDescription: 'Batting All-Rounder'),
+        PlayerValuation(name: 'Aman', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.allRounder, roleDescription: 'Wicket-Taker & Quick Run Getter'),
+        PlayerValuation(name: 'Ikschit', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bat, roleDescription: 'Reliable Squad Batter'),
+        PlayerValuation(name: 'Alok', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bowl, roleDescription: 'Steady Seamer & Utility Bowler'),
+        PlayerValuation(name: 'Amit', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bat, roleDescription: 'Reliable Middle-Order Batter'),
+        PlayerValuation(name: 'Tinku', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bowl, roleDescription: 'Pinch Hitter & Bowler'),
+        PlayerValuation(name: 'Mohan', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bowl, roleDescription: 'Death Overs Specialist'),
+        PlayerValuation(name: 'Piyush', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bowl, roleDescription: 'Solid Field & Swing Bowler'),
+        PlayerValuation(name: 'Rohan', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bat, roleDescription: 'Middle-Order Support Batter'),
+        PlayerValuation(name: 'Satish', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bowl, roleDescription: 'Pure Line & Length Bowler'),
+        PlayerValuation(name: 'Niranjan', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bat, roleDescription: 'Backup Squad Batter'),
+        PlayerValuation(name: 'Mohit', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bat, roleDescription: 'Emerging Batter'),
+        PlayerValuation(name: 'Shaurya', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bat, roleDescription: 'Late-Order Reserve'),
+        PlayerValuation(name: 'Aashish', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bat, roleDescription: 'Squad Depth Specialist'),
+        PlayerValuation(name: 'Dev', score: 50, auctionScore: 50, historicalAvgPrice: 1200, timesAuctioned: 0, adjustedRank: 1, minCeiling: 1000, maxCeiling: 1400, role: CricketRole.bat, roleDescription: 'Base Entry Player'),
       ];
 
   static PlayerValuation getValuationFor(String playerName) {

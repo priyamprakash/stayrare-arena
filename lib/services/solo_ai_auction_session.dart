@@ -90,7 +90,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
   // Configuration
   String userTeamName = 'My Team';
   String aiTeamName = 'stayrare-model';
-  int targetSquadSize = 11;
+  int targetSquadSize = 10;
   int initialPurse = 12000;
 
   // Session State
@@ -177,7 +177,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
 
     userTeamName = userName ?? userTeamName;
     aiTeamName = 'stayrare-model';
-    targetSquadSize = squadTarget ?? 11;
+    targetSquadSize = squadTarget ?? 10;
     initialPurse = purseAmount ?? _aiEngine.brain.startingPurse;
 
     userPurse = initialPurse;
@@ -297,9 +297,9 @@ class SoloAiAuctionSession extends ChangeNotifier {
   int getBasePriceForPlayer(PlayerValuation player) {
     if (isAcceleratedRound) {
       // 40% discount in accelerated round
-      return player.isMarqueeDefault ? 300 : 50;
+      return player.isMarquee ? 300 : 50;
     }
-    return player.isMarqueeDefault ? 500 : 100;
+    return player.isMarquee ? 500 : 100;
   }
 
   int get nextUserBidPrice {
@@ -474,23 +474,34 @@ class SoloAiAuctionSession extends ChangeNotifier {
       return;
     }
 
-    // Set 1: Marquee / Elite Stars (score >= 68 or isMarqueeDefault) -> Priyam, Ashutosh, Sangam, Avinash, Saurabh, Sunny, Rahul
-    final marquee = available.where((p) => p.isMarqueeDefault || p.score >= 68).toList();
-    if (marquee.isNotEmpty) {
-      final selected = marquee[Random().nextInt(marquee.length)];
+    // If AI has learned data from past auctions, throw players according to their past records (better ranked comes first!)
+    if (learnerService.hasLearnedData) {
+      final rankedAvailable = available.map((p) => learnerService.getPlayerValuation(p.name)).toList();
+      rankedAvailable.sort((a, b) => b.compositeScore.compareTo(a.compositeScore));
+
+      // Tier 1: Top 7 Ranked Players (Proven Marquee Stars)
+      final topRanked = rankedAvailable.where((p) => p.adjustedRank <= 7).toList();
+      if (topRanked.isNotEmpty) {
+        final selected = topRanked[Random().nextInt(topRanked.length)];
+        placePlayerOnBlock(selected);
+        return;
+      }
+
+      // Tier 2: Mid Ranked Players (Ranks 8 to 15)
+      final midRanked = rankedAvailable.where((p) => p.adjustedRank > 7 && p.adjustedRank <= 15).toList();
+      if (midRanked.isNotEmpty) {
+        final selected = midRanked[Random().nextInt(midRanked.length)];
+        placePlayerOnBlock(selected);
+        return;
+      }
+
+      // Tier 3: Value / Depth Tier (Ranks 16+)
+      final selected = rankedAvailable[Random().nextInt(rankedAvailable.length)];
       placePlayerOnBlock(selected);
       return;
     }
 
-    // Set 2: Tier 2 / Core Players (score 45 - 67) -> Ritesh, Aman, Ikschit, Alok, Amit, Tinku, Mohan, Piyush
-    final tier2 = available.where((p) => p.score >= 45 && p.score < 68).toList();
-    if (tier2.isNotEmpty) {
-      final selected = tier2[Random().nextInt(tier2.length)];
-      placePlayerOnBlock(selected);
-      return;
-    }
-
-    // Set 3: Tier 3 / Value & Depth (score < 45) -> Rohan, Satish, Niranjan, Mohit, Shaurya, Aashish, Dev
+    // In Auction #1 (Cold Start): Everyone is No. 1 and equal, so throw players randomly!
     final selected = available[Random().nextInt(available.length)];
     placePlayerOnBlock(selected);
   }
