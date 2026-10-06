@@ -17,12 +17,13 @@ void main() {
     test('Valuations database matches exact user specifications', () {
       final priyam = StayrarePlayerDatabase.getValuationFor('Priyam');
       expect(priyam.score, 93);
-      expect(priyam.minCeiling, 2500);
+      expect(priyam.minCeiling, 3000);
+      expect(priyam.maxCeiling, 3800);
       expect(priyam.role, CricketRole.allRounder);
 
       final ashutosh = StayrarePlayerDatabase.getValuationFor('Ashutosh');
       expect(ashutosh.score, 89);
-      expect(ashutosh.maxCeiling, 3000);
+      expect(ashutosh.maxCeiling, 3500);
       expect(ashutosh.role, CricketRole.allRounder);
 
       final avinash = StayrarePlayerDatabase.getValuationFor('Avinash');
@@ -30,9 +31,12 @@ void main() {
       expect(avinash.maxCeiling, 3000);
       expect(avinash.role, CricketRole.allRounder);
 
+      // Verify Priyam is valued higher than Avinash
+      expect(priyam.maxCeiling, greaterThan(avinash.maxCeiling));
+
       final rahul = StayrarePlayerDatabase.getValuationFor('Rahul');
       expect(rahul.score, 68);
-      expect(rahul.maxCeiling, 2500);
+      expect(rahul.maxCeiling, 2400);
       expect(rahul.role, CricketRole.bat);
 
       final dev = StayrarePlayerDatabase.getValuationFor('Dev');

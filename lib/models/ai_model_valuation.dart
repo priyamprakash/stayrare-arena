@@ -90,13 +90,13 @@ class StayrarePlayerDatabase {
   }
 
   static const List<PlayerValuation> officialValuations = [
-    PlayerValuation(name: 'Priyam', score: 93, minCeiling: 2500, maxCeiling: 3000, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Explosive All-Rounder & Striker'),
-    PlayerValuation(name: 'Ashutosh', score: 89, minCeiling: 2500, maxCeiling: 3000, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Bowling All-Rounder & Seamer'),
-    PlayerValuation(name: 'Sangam', score: 89, minCeiling: 2500, maxCeiling: 3000, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Batting All-Rounder & Striker'),
+    PlayerValuation(name: 'Priyam', score: 93, minCeiling: 3000, maxCeiling: 3800, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Explosive All-Rounder & Striker'),
+    PlayerValuation(name: 'Ashutosh', score: 89, minCeiling: 2750, maxCeiling: 3500, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Bowling All-Rounder & Seamer'),
+    PlayerValuation(name: 'Sangam', score: 89, minCeiling: 2750, maxCeiling: 3500, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Batting All-Rounder & Striker'),
     PlayerValuation(name: 'Avinash', score: 86, minCeiling: 2500, maxCeiling: 3000, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Anchor Batter & All-Rounder'),
-    PlayerValuation(name: 'Saurabh', score: 82, minCeiling: 2000, maxCeiling: 2500, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Clutch Finisher & All-Rounder'),
+    PlayerValuation(name: 'Saurabh', score: 82, minCeiling: 2200, maxCeiling: 2750, isMarqueeDefault: true, role: CricketRole.allRounder, roleDescription: 'Clutch Finisher & All-Rounder'),
     PlayerValuation(name: 'Sunny', score: 75, minCeiling: 2000, maxCeiling: 2500, isMarqueeDefault: true, role: CricketRole.bat, roleDescription: 'Dynamic Middle-Order Gun'),
-    PlayerValuation(name: 'Rahul', score: 68, minCeiling: 2000, maxCeiling: 2500, isMarqueeDefault: true, role: CricketRole.bat, roleDescription: 'Dependable Anchor Batsman'),
+    PlayerValuation(name: 'Rahul', score: 68, minCeiling: 1900, maxCeiling: 2400, isMarqueeDefault: true, role: CricketRole.bat, roleDescription: 'Dependable Anchor Batsman'),
     PlayerValuation(name: 'Ritesh', score: 61, minCeiling: 1250, maxCeiling: 1250, role: CricketRole.allRounder, roleDescription: 'Batting All-Rounder'),
     PlayerValuation(name: 'Aman', score: 59, minCeiling: 1250, maxCeiling: 1250, role: CricketRole.allRounder, roleDescription: 'Wicket-Taker & Quick Run Getter'),
     PlayerValuation(name: 'Ikschit', score: 57, minCeiling: 1250, maxCeiling: 1250, role: CricketRole.bat, roleDescription: 'Reliable Squad Batter'),

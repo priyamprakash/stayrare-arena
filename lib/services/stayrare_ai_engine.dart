@@ -212,15 +212,30 @@ class StayrareAiEngine {
     // If player is in Top 7 and AI hasn't secured 3 of them yet, stretch ceiling aggressively according to available purse!
     final safeMaxForStar = max(0, input.yourPurseRemaining - (remainingSlotsToFill - 1) * brain.squadReserveFloor);
     if (isTop7Urgency) {
-      // If AI is rich (purse >= 6500), top-7 star ceiling is raised to ₹2500 - ₹3000+
+      // Calibrated hierarchy by score: Priyam (93) is highest at ₹3800, Ashutosh/Sangam (89) at ₹3500, Avinash (86) capped at ₹3000
+      int targetTop7Base;
+      if (score >= 90) {
+        targetTop7Base = 3800; // Priyam (MVP)
+      } else if (score >= 88) {
+        targetTop7Base = 3500; // Ashutosh & Sangam
+      } else if (score >= 85) {
+        targetTop7Base = 3000; // Avinash
+      } else if (score >= 80) {
+        targetTop7Base = 2750; // Saurabh
+      } else if (score >= 70) {
+        targetTop7Base = 2500; // Sunny
+      } else {
+        targetTop7Base = 2400; // Rahul
+      }
+
       if (input.yourPurseRemaining >= 6500) {
-        final targetTop7Base = score >= 80 ? 3000 : 2500;
         dynamicCeiling = max(dynamicCeiling, min(safeMaxForStar, targetTop7Base));
       }
 
       // If scarce top-7 stars remain (e.g. need 2, only 2 left in pool), activate critical must-win bidding!
       if (top7RemainingInPool <= top7Needed) {
-        dynamicCeiling = max(dynamicCeiling, min(safeMaxForStar, 3200));
+        final mustWinCeiling = (targetTop7Base * 1.05).round();
+        dynamicCeiling = max(dynamicCeiling, min(safeMaxForStar, mustWinCeiling));
       }
     } else {
       // Practical Purse-Depth Stretch for regular players

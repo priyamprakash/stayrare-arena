@@ -30,8 +30,8 @@
     {
       "name": "Priyam",
       "score": 93,
-      "min_ceiling": 2500,
-      "max_ceiling": 3000,
+      "min_ceiling": 3000,
+      "max_ceiling": 3800,
       "role": "allRounder",
       "role_description": "Explosive All-Rounder & Striker",
       "is_marquee": true
@@ -39,8 +39,8 @@
     {
       "name": "Ashutosh",
       "score": 89,
-      "min_ceiling": 2500,
-      "max_ceiling": 3000,
+      "min_ceiling": 2750,
+      "max_ceiling": 3500,
       "role": "allRounder",
       "role_description": "Bowling All-Rounder & Seamer",
       "is_marquee": true
@@ -48,8 +48,8 @@
     {
       "name": "Sangam",
       "score": 89,
-      "min_ceiling": 2500,
-      "max_ceiling": 3000,
+      "min_ceiling": 2750,
+      "max_ceiling": 3500,
       "role": "allRounder",
       "role_description": "Batting All-Rounder & Striker",
       "is_marquee": true
@@ -66,8 +66,8 @@
     {
       "name": "Saurabh",
       "score": 82,
-      "min_ceiling": 2000,
-      "max_ceiling": 2500,
+      "min_ceiling": 2200,
+      "max_ceiling": 2750,
       "role": "allRounder",
       "role_description": "Clutch Finisher & All-Rounder",
       "is_marquee": true
@@ -84,8 +84,8 @@
     {
       "name": "Rahul",
       "score": 68,
-      "min_ceiling": 2000,
-      "max_ceiling": 2500,
+      "min_ceiling": 1900,
+      "max_ceiling": 2400,
       "role": "bat",
       "role_description": "Dependable Anchor Batsman",
       "is_marquee": true
