@@ -444,7 +444,7 @@ class HomeView extends StatelessWidget {
                                 child: const FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
-                                    'Battle AI →',
+                                    'Start Auction Battle →',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w900,
                                       fontSize: 11.5,
