@@ -12,7 +12,9 @@ class AiBrainProfile {
   final double scarcityMultiplier;
   final double marqueeStretchMultiplier;
   final int maxStretchPicks;
-  final double emergencyWkMultiplier;
+  final int top7TargetCount;
+  final int maxPureBatters;
+  final int minBowlingOptions;
   final int bluffFrequency;
   final double bluffCeilingFactor;
   final bool denialBiddingEnabled;
@@ -37,7 +39,9 @@ class AiBrainProfile {
     required this.scarcityMultiplier,
     required this.marqueeStretchMultiplier,
     required this.maxStretchPicks,
-    required this.emergencyWkMultiplier,
+    this.top7TargetCount = 3,
+    this.maxPureBatters = 5,
+    this.minBowlingOptions = 5,
     required this.bluffFrequency,
     required this.bluffCeilingFactor,
     required this.denialBiddingEnabled,
@@ -73,10 +77,6 @@ class AiBrainProfile {
         case 'bowler':
           role = CricketRole.bowl;
           break;
-        case 'wk':
-        case 'wicketkeeper':
-          role = CricketRole.wk;
-          break;
         default:
           role = CricketRole.allRounder;
       }
@@ -107,7 +107,9 @@ class AiBrainProfile {
       scarcityMultiplier: (params['scarcity_multiplier'] as num?)?.toDouble() ?? 1.20,
       marqueeStretchMultiplier: (params['marquee_stretch_multiplier'] as num?)?.toDouble() ?? 1.25,
       maxStretchPicks: (params['max_stretch_picks'] as num?)?.toInt() ?? 3,
-      emergencyWkMultiplier: (params['emergency_wk_multiplier'] as num?)?.toDouble() ?? 1.25,
+      top7TargetCount: (params['top7_target_count'] as num?)?.toInt() ?? 3,
+      maxPureBatters: (params['max_pure_batters'] as num?)?.toInt() ?? 5,
+      minBowlingOptions: (params['min_bowling_options'] as num?)?.toInt() ?? 5,
       bluffFrequency: (params['bluff_frequency'] as num?)?.toInt() ?? 5,
       bluffCeilingFactor: (params['bluff_ceiling_factor'] as num?)?.toDouble() ?? 0.80,
       denialBiddingEnabled: params['denial_bidding_enabled'] ?? true,
@@ -134,7 +136,9 @@ class AiBrainProfile {
       scarcityMultiplier: 1.20,
       marqueeStretchMultiplier: 1.25,
       maxStretchPicks: 3,
-      emergencyWkMultiplier: 1.25,
+      top7TargetCount: 3,
+      maxPureBatters: 5,
+      minBowlingOptions: 5,
       bluffFrequency: 5,
       bluffCeilingFactor: 0.80,
       denialBiddingEnabled: true,

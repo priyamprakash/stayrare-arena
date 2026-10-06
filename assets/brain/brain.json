@@ -10,7 +10,9 @@
     "scarcity_multiplier": 1.20,
     "marquee_stretch_multiplier": 1.25,
     "max_stretch_picks": 3,
-    "emergency_wk_multiplier": 1.25,
+    "top7_target_count": 3,
+    "max_pure_batters": 5,
+    "min_bowling_options": 5,
     "bluff_frequency": 5,
     "bluff_ceiling_factor": 0.80,
     "denial_bidding_enabled": true,
@@ -29,9 +31,9 @@
       "name": "Priyam",
       "score": 93,
       "min_ceiling": 2500,
-      "max_ceiling": 2500,
-      "role": "bat",
-      "role_description": "Explosive Opener & Striker",
+      "max_ceiling": 3000,
+      "role": "allRounder",
+      "role_description": "Explosive All-Rounder & Striker",
       "is_marquee": true
     },
     {
@@ -39,8 +41,8 @@
       "score": 89,
       "min_ceiling": 2500,
       "max_ceiling": 3000,
-      "role": "bat",
-      "role_description": "Power Hitter & Match Winner",
+      "role": "allRounder",
+      "role_description": "Bowling All-Rounder & Seamer",
       "is_marquee": true
     },
     {
@@ -49,31 +51,31 @@
       "min_ceiling": 2500,
       "max_ceiling": 3000,
       "role": "allRounder",
-      "role_description": "Premium All-Rounder & Pacer",
+      "role_description": "Batting All-Rounder & Striker",
       "is_marquee": true
     },
     {
       "name": "Avinash",
       "score": 86,
-      "min_ceiling": 3000,
+      "min_ceiling": 2500,
       "max_ceiling": 3000,
-      "role": "wk",
-      "role_description": "Anchor Batter & Wicketkeeper",
+      "role": "allRounder",
+      "role_description": "Anchor Batter & All-Rounder",
       "is_marquee": true
     },
     {
       "name": "Saurabh",
       "score": 82,
       "min_ceiling": 2000,
-      "max_ceiling": 2000,
+      "max_ceiling": 2500,
       "role": "allRounder",
-      "role_description": "Clutch Finisher & Bowler",
+      "role_description": "Clutch Finisher & All-Rounder",
       "is_marquee": true
     },
     {
       "name": "Sunny",
       "score": 75,
-      "min_ceiling": 2500,
+      "min_ceiling": 2000,
       "max_ceiling": 2500,
       "role": "bat",
       "role_description": "Dynamic Middle-Order Gun",
@@ -83,9 +85,9 @@
       "name": "Rahul",
       "score": 68,
       "min_ceiling": 2000,
-      "max_ceiling": 2000,
-      "role": "allRounder",
-      "role_description": "Dependable All-Round Core",
+      "max_ceiling": 2500,
+      "role": "bat",
+      "role_description": "Dependable Anchor Batsman",
       "is_marquee": true
     },
     {
@@ -93,8 +95,8 @@
       "score": 61,
       "min_ceiling": 1250,
       "max_ceiling": 1250,
-      "role": "bowl",
-      "role_description": "Middle Overs Controller",
+      "role": "allRounder",
+      "role_description": "Batting All-Rounder",
       "is_marquee": false
     },
     {
@@ -121,7 +123,7 @@
       "min_ceiling": 1250,
       "max_ceiling": 1250,
       "role": "bowl",
-      "role_description": "Steady Seamer & Utility Player",
+      "role_description": "Steady Seamer & Utility Bowler",
       "is_marquee": false
     },
     {
@@ -165,8 +167,8 @@
       "score": 41,
       "min_ceiling": 500,
       "max_ceiling": 500,
-      "role": "allRounder",
-      "role_description": "Spin Option & Support Batter",
+      "role": "bat",
+      "role_description": "Middle-Order Support Batter",
       "is_marquee": false
     },
     {
@@ -174,8 +176,8 @@
       "score": 41,
       "min_ceiling": 500,
       "max_ceiling": 500,
-      "role": "bat",
-      "role_description": "Tenacious Defensive Batter",
+      "role": "bowl",
+      "role_description": "Pure Line & Length Bowler",
       "is_marquee": false
     },
     {
@@ -183,8 +185,8 @@
       "score": 30,
       "min_ceiling": 300,
       "max_ceiling": 300,
-      "role": "wk",
-      "role_description": "Backup Wicketkeeper & Batter",
+      "role": "bat",
+      "role_description": "Backup Squad Batter",
       "is_marquee": false
     },
     {
@@ -192,8 +194,8 @@
       "score": 25,
       "min_ceiling": 300,
       "max_ceiling": 300,
-      "role": "bowl",
-      "role_description": "Emerging Talent",
+      "role": "bat",
+      "role_description": "Emerging Batter",
       "is_marquee": false
     },
     {
@@ -210,7 +212,7 @@
       "score": 11,
       "min_ceiling": 200,
       "max_ceiling": 200,
-      "role": "bowl",
+      "role": "bat",
       "role_description": "Squad Depth Specialist",
       "is_marquee": false
     },

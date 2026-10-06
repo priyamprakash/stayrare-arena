@@ -18,22 +18,115 @@ void main() {
       final priyam = StayrarePlayerDatabase.getValuationFor('Priyam');
       expect(priyam.score, 93);
       expect(priyam.minCeiling, 2500);
+      expect(priyam.role, CricketRole.allRounder);
 
       final ashutosh = StayrarePlayerDatabase.getValuationFor('Ashutosh');
       expect(ashutosh.score, 89);
       expect(ashutosh.maxCeiling, 3000);
+      expect(ashutosh.role, CricketRole.allRounder);
 
       final avinash = StayrarePlayerDatabase.getValuationFor('Avinash');
       expect(avinash.score, 86);
-      expect(avinash.minCeiling, 3000);
+      expect(avinash.maxCeiling, 3000);
+      expect(avinash.role, CricketRole.allRounder);
+
+      final rahul = StayrarePlayerDatabase.getValuationFor('Rahul');
+      expect(rahul.score, 68);
+      expect(rahul.maxCeiling, 2500);
+      expect(rahul.role, CricketRole.bat);
 
       final dev = StayrarePlayerDatabase.getValuationFor('Dev');
       expect(dev.score, 5);
       expect(dev.minCeiling, 100);
+      expect(dev.role, CricketRole.bat);
 
       final amit = StayrarePlayerDatabase.getValuationFor('Amit');
       expect(amit.score, 50);
       expect(amit.minCeiling, 750);
+    });
+
+    test('AI bids aggressively above 1750 on Rahul when top 7 star is needed and purse is available', () {
+      final decision = engine.decide(
+        const AiDecisionInput(
+          player: 'Rahul',
+          currentBid: 1800,
+          currentBidLeader: 'user',
+          nextIncrement: 250,
+          yourPurseRemaining: 10000,
+          yourSquadCount: 1,
+          userPurseRemaining: 9000,
+          userSquadCount: 1,
+          playersRemainingInPool: 15,
+          playersRemainingList: StayrarePlayerDatabase.officialValuations,
+          yourSquadNames: [], // 0 top 7 stars yet -> target is 3!
+        ),
+      );
+
+      expect(decision.action, 'bid');
+      expect(decision.amount, 2050);
+      expect(decision.strategyNote, contains('Top 7'));
+    });
+
+    test('AI enforces Shaurya and Dev mutual exclusion (never buys both)', () {
+      // AI already has Shaurya -> passes on Dev
+      final decisionDev = engine.decide(
+        const AiDecisionInput(
+          player: 'Dev',
+          currentBid: 100,
+          currentBidLeader: 'user',
+          nextIncrement: 100,
+          yourPurseRemaining: 8000,
+          yourSquadCount: 3,
+          userPurseRemaining: 8000,
+          userSquadCount: 3,
+          playersRemainingInPool: 10,
+          yourSquadNames: ['Shaurya', 'Priyam', 'Rohan'],
+        ),
+      );
+      expect(decisionDev.action, 'pass');
+      expect(decisionDev.strategyNote, contains('Shaurya'));
+
+      // AI already has Dev -> passes on Shaurya
+      final decisionShaurya = engine.decide(
+        const AiDecisionInput(
+          player: 'Shaurya',
+          currentBid: 100,
+          currentBidLeader: 'user',
+          nextIncrement: 100,
+          yourPurseRemaining: 8000,
+          yourSquadCount: 3,
+          userPurseRemaining: 8000,
+          userSquadCount: 3,
+          playersRemainingInPool: 10,
+          yourSquadNames: ['Dev', 'Priyam', 'Rohan'],
+        ),
+      );
+      expect(decisionShaurya.action, 'pass');
+      expect(decisionShaurya.strategyNote, contains('Dev'));
+    });
+
+    test('AI enforces max 5 pure batsmen cap and 5 bowling options mandate', () {
+      // AI already has 5 pure batsmen -> passes on another pure batsman (e.g. Amit)
+      final decisionMaxBat = engine.decide(
+        const AiDecisionInput(
+          player: 'Amit', // role: bat
+          currentBid: 300,
+          currentBidLeader: 'user',
+          nextIncrement: 100,
+          yourPurseRemaining: 5000,
+          yourSquadCount: 5,
+          userPurseRemaining: 5000,
+          userSquadCount: 5,
+          playersRemainingInPool: 8,
+          yourRoleCounts: {
+            CricketRole.bat: 5,
+            CricketRole.bowl: 0,
+            CricketRole.allRounder: 0,
+          },
+        ),
+      );
+      expect(decisionMaxBat.action, 'pass');
+      expect(decisionMaxBat.strategyNote, contains('Pure batsmen cap reached'));
     });
 
     test('AI passes when bid exceeds ceiling for normal players', () {
@@ -213,15 +306,14 @@ void main() {
       expect(session.getBasePriceForPlayer(regular), 50); // 50% / 40% off 100
     });
 
-    test('Squad Role Mandates track roles properly', () {
+    test('Squad Role Mandates track 3 roles (BAT, BOWL, AR) without WK', () {
       final session = SoloAiAuctionSession();
-      expect(session.roleMandates[CricketRole.wk], 1);
       expect(session.roleMandates[CricketRole.bat], 3);
-      expect(session.roleMandates[CricketRole.bowl], 3);
+      expect(session.roleMandates[CricketRole.bowl], 2);
       expect(session.roleMandates[CricketRole.allRounder], 2);
 
       final avinash = session.playerPool.firstWhere((p) => p.name == 'Avinash');
-      expect(avinash.role, CricketRole.wk);
+      expect(avinash.role, CricketRole.allRounder);
     });
 
     test('Principle 1 & JSON: Scarcity boost and strict JSON serialization', () {
@@ -237,6 +329,7 @@ void main() {
           userSquadCount: 1,
           playersRemainingInPool: 10,
           playersRemainingList: [], // 0 similar 85+ players left in pool!
+          yourSquadNames: ['Ashutosh', 'Sangam', 'Saurabh'], // Already has 3 top 7 stars
         ),
       );
 
@@ -255,7 +348,9 @@ void main() {
       expect(brain.scarcityMultiplier, 1.20);
       expect(brain.squadReserveFloor, 100);
       expect(brain.rtmMinScore, 75);
-      expect(brain.maxStretchPicks, 3);
+      expect(brain.top7TargetCount, 3);
+      expect(brain.maxPureBatters, 5);
+      expect(brain.minBowlingOptions, 5);
 
       final customBrain = AiBrainProfile.fromJson({
         'persona': {'name': 'Custom Moneyball', 'archetype': 'Analyst'},
@@ -264,6 +359,7 @@ void main() {
           'scarcity_multiplier': 1.25,
           'squad_reserve_floor': 180,
           'rtm_min_score': 80,
+          'top7_target_count': 3,
         },
         'player_valuations': [
           {'name': 'Priyam', 'score': 95, 'min_ceiling': 2800, 'max_ceiling': 2800, 'role': 'bat'}

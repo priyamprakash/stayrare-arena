@@ -17,6 +17,8 @@ class AiDecisionInput {
   final bool isAcceleratedRound;
   final bool isJumpBidByOpponent;
   final Map<CricketRole, int> yourRoleCounts;
+  final List<String> yourSquadNames;
+  final List<String> userSquadNames;
 
   const AiDecisionInput({
     required this.player,
@@ -33,6 +35,8 @@ class AiDecisionInput {
     this.isAcceleratedRound = false,
     this.isJumpBidByOpponent = false,
     this.yourRoleCounts = const {},
+    this.yourSquadNames = const [],
+    this.userSquadNames = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -121,6 +125,50 @@ class StayrareAiEngine {
       }
     }
 
+    // Rule: Shaurya & Dev Mutual Exclusion (No team wants both low-tier reserve picks)
+    final cleanPlayerName = valuation.name.trim().toLowerCase();
+    if (cleanPlayerName == 'dev' && input.yourSquadNames.any((n) => n.trim().toLowerCase() == 'shaurya')) {
+      return AiBidDecision(
+        action: 'pass',
+        amount: null,
+        strategyNote: 'Mutual exclusion: Already have Shaurya, passing on Dev to prevent low-tier surplus',
+        trashTalk: "Nice try! I already have my reserve depth. Dev is all yours.",
+      );
+    }
+    if (cleanPlayerName == 'shaurya' && input.yourSquadNames.any((n) => n.trim().toLowerCase() == 'dev')) {
+      return AiBidDecision(
+        action: 'pass',
+        amount: null,
+        strategyNote: 'Mutual exclusion: Already have Dev, passing on Shaurya to prevent low-tier surplus',
+        trashTalk: "Nice try! I already have Dev. Shaurya is all yours.",
+      );
+    }
+
+    // Squad Role Constraints: Max 5 Pure Batsmen & Min 5 Bowling Options (Bowl + All-Rounder)
+    final currentBatCount = input.yourRoleCounts[CricketRole.bat] ?? 0;
+    final currentBowlCount = input.yourRoleCounts[CricketRole.bowl] ?? 0;
+    final currentArCount = input.yourRoleCounts[CricketRole.allRounder] ?? 0;
+    final currentBowlingOptions = currentBowlCount + currentArCount;
+    final bowlingShortfall = max(0, brain.minBowlingOptions - currentBowlingOptions);
+
+    if (valuation.role == CricketRole.bat && currentBatCount >= brain.maxPureBatters) {
+      return AiBidDecision(
+        action: 'pass',
+        amount: null,
+        strategyNote: 'Pure batsmen cap reached ($currentBatCount/${brain.maxPureBatters}): Must draft bowling depth',
+        trashTalk: "My batting lineup is fully loaded. Looking for bowling firepower now.",
+      );
+    }
+
+    if (valuation.role == CricketRole.bat && remainingSlotsToFill <= bowlingShortfall) {
+      return AiBidDecision(
+        action: 'pass',
+        amount: null,
+        strategyNote: 'Bowling mandate: Reserving remaining $remainingSlotsToFill slots to reach min ${brain.minBowlingOptions} bowling options (currently $currentBowlingOptions)',
+        trashTalk: "I need all-rounders and bowlers to finish my attack. Passing on this batter.",
+      );
+    }
+
     // Principle 2: Read opponent's purse (not just our own)
     final userSlotsNeeded = max(0, input.targetSquadSize - input.userSquadCount);
     final userReserve = userSlotsNeeded > 1 ? (userSlotsNeeded - 1) * 200 : 0;
@@ -131,15 +179,18 @@ class StayrareAiEngine {
     final isBehindInSquad = input.yourSquadCount < input.userSquadCount;
     final urgentSquadFill = isEndgame && isBehindInSquad && remainingSlotsToFill > 0;
 
-    // Check mandatory role deficiency (Min 1 WK, Min 3 BAT, Min 3 BOWL, Min 2 AR)
-    final currentWkCount = input.yourRoleCounts[CricketRole.wk] ?? 0;
-    final isMissingMandatoryWk = valuation.role == CricketRole.wk && currentWkCount == 0 && remainingSlotsToFill <= 3;
+    // Top 7 Marquee Strategy: Aim to get at least 3 of Top 7 players (Priyam, Ashutosh, Sangam, Avinash, Saurabh, Sunny, Rahul)
+    final isTop7 = StayrarePlayerDatabase.isTop7Player(valuation.name);
+    final aiTop7Count = input.yourSquadNames.where((n) => StayrarePlayerDatabase.isTop7Player(n)).length;
+    final top7RemainingInPool = input.playersRemainingList.where((p) => StayrarePlayerDatabase.isTop7Player(p.name)).length;
+    final top7Needed = max(0, brain.top7TargetCount - aiTop7Count);
+    final isTop7Urgency = isTop7 && aiTop7Count < brain.top7TargetCount;
 
     // Smart Opening Pass Evaluation: If user passed opening bid, AI does NOT auto-buy low-tier players
     if (isOpening) {
       final hasHigherTierRemaining = input.playersRemainingList.any((p) => p.score >= 50);
       final isLowTier = score < 45;
-      if (isLowTier && hasHigherTierRemaining && !urgentSquadFill && !isMissingMandatoryWk) {
+      if (isLowTier && hasHigherTierRemaining && !urgentSquadFill) {
         return AiBidDecision(
           action: 'pass',
           amount: null,
@@ -157,11 +208,27 @@ class StayrareAiEngine {
     final jitter = _playerJitterMap[valuation.name]!;
     var dynamicCeiling = (valuation.baseCeiling * (1.0 + jitter)).round();
 
-    // Practical Purse-Depth Stretch: If AI has abundant purse per slot, stretch ceiling dynamically!
-    final aiPursePerSlot = input.yourPurseRemaining / max(1, remainingSlotsToFill);
-    if (brain.allowDynamicStretchAboveCeiling && aiPursePerSlot >= 1400 && score >= 65) {
-      final stretchRatio = score >= 85 ? (brain.dynamicPurseStretchRatio * 1.3) : brain.dynamicPurseStretchRatio;
-      dynamicCeiling = (dynamicCeiling * (1.0 + stretchRatio)).round();
+    // Human-like Purse Depth & Top 7 Scaling:
+    // If player is in Top 7 and AI hasn't secured 3 of them yet, stretch ceiling aggressively according to available purse!
+    final safeMaxForStar = max(0, input.yourPurseRemaining - (remainingSlotsToFill - 1) * brain.squadReserveFloor);
+    if (isTop7Urgency) {
+      // If AI is rich (purse >= 6500), top-7 star ceiling is raised to ₹2500 - ₹3000+
+      if (input.yourPurseRemaining >= 6500) {
+        final targetTop7Base = score >= 80 ? 3000 : 2500;
+        dynamicCeiling = max(dynamicCeiling, min(safeMaxForStar, targetTop7Base));
+      }
+
+      // If scarce top-7 stars remain (e.g. need 2, only 2 left in pool), activate critical must-win bidding!
+      if (top7RemainingInPool <= top7Needed) {
+        dynamicCeiling = max(dynamicCeiling, min(safeMaxForStar, 3200));
+      }
+    } else {
+      // Practical Purse-Depth Stretch for regular players
+      final aiPursePerSlot = input.yourPurseRemaining / max(1, remainingSlotsToFill);
+      if (brain.allowDynamicStretchAboveCeiling && aiPursePerSlot >= 1400 && score >= 65) {
+        final stretchRatio = score >= 85 ? (brain.dynamicPurseStretchRatio * 1.3) : brain.dynamicPurseStretchRatio;
+        dynamicCeiling = (dynamicCeiling * (1.0 + stretchRatio)).round();
+      }
     }
 
     // Principle 1: Value over replacement, not raw score
@@ -175,10 +242,6 @@ class StayrareAiEngine {
       // LAST strong player of its tier left -> raise effective ceiling by scarcityMultiplier
       dynamicCeiling = (dynamicCeiling * brain.scarcityMultiplier).round();
       scarcityBoostApplied = true;
-    }
-
-    if (isMissingMandatoryWk) {
-      dynamicCeiling = (dynamicCeiling * brain.emergencyWkMultiplier).round();
     }
 
     // 85+ score top marquee pick stretch logic (max stretch picks per brain)
@@ -242,8 +305,8 @@ class StayrareAiEngine {
       );
     }
 
-    // Principle 1 (Replacement count check): If $\ge 2$ similar replacements exist and bid is high, let go cheap
-    if (similarReplacements.length >= 2 && score < 70 && !urgentSquadFill && !isMissingMandatoryWk) {
+    // Principle 1 (Replacement count check): If $\ge 2$ similar replacements exist and bid is high, let go cheap (unless top-7 urgency!)
+    if (similarReplacements.length >= 2 && score < 70 && !urgentSquadFill && !isTop7Urgency) {
       if (proposedBid > (dynamicCeiling * 0.85) && currentBumps >= 1 && input.currentBidLeader == 'user') {
         return AiBidDecision(
           action: 'pass',
@@ -255,7 +318,7 @@ class StayrareAiEngine {
     }
 
     // Sub-40 score players -> let go cheap unless urgent squad fill
-    if (score < 40 && !urgentSquadFill && !isMissingMandatoryWk) {
+    if (score < 40 && !urgentSquadFill) {
       if (!isEndgame && (proposedBid > 200 || currentBumps >= 1)) {
         return AiBidDecision(
           action: 'pass',
@@ -267,7 +330,7 @@ class StayrareAiEngine {
     }
 
     // Normal Ceiling Check
-    if (proposedBid > dynamicCeiling && !urgentSquadFill && !isMissingMandatoryWk) {
+    if (proposedBid > dynamicCeiling && !urgentSquadFill) {
       return AiBidDecision(
         action: 'pass',
         amount: null,
@@ -285,8 +348,8 @@ class StayrareAiEngine {
     String strategyNote;
     if (urgentSquadFill) {
       strategyNote = 'Endgame squad fill: securing roster depth ($input.yourSquadCount/${input.targetSquadSize})';
-    } else if (isMissingMandatoryWk) {
-      strategyNote = 'Mandatory role urgency: securing required ${valuation.role.label}';
+    } else if (isTop7Urgency) {
+      strategyNote = 'Top 7 Marquee Priority ($aiTop7Count/${brain.top7TargetCount} stars acquired): Bidding aggressively up to ₹$dynamicCeiling';
     } else if (scarcityBoostApplied) {
       strategyNote = 'Scarcity premium (+18% ceiling): last available player in $score tier';
     } else if (isStretching) {
@@ -325,8 +388,9 @@ class StayrareAiEngine {
       if (purseAfter < (remainingSlots - 1) * brain.squadReserveFloor) return false;
     }
 
-    // Principle 7: Save RTM for players scoring rtmMinScore+ lost within max margin
-    if (valuation.score >= brain.rtmMinScore && winningPrice <= (valuation.maxCeiling * brain.rtmMaxMarginPercent)) {
+    // Principle 7: Save RTM for players scoring rtmMinScore+ or Top 7 stars lost within max margin
+    final isTop7 = StayrarePlayerDatabase.isTop7Player(playerName);
+    if ((isTop7 || valuation.score >= brain.rtmMinScore) && winningPrice <= (valuation.maxCeiling * brain.rtmMaxMarginPercent)) {
       return true;
     }
 
@@ -352,17 +416,18 @@ class StayrareAiEngine {
     }
 
     // AI raises aggressively towards its valuation ceiling for quality players:
-    // Elite / Marquee (score >= 80): 95% to 105% of maxCeiling
-    // High-tier (score 70-79): 85% to 95% of maxCeiling
-    // Solid (score 55-69): 75% to 85% of maxCeiling
+    // Top 7 / Elite (score >= 80): 98% to 105% of maxCeiling
+    // High-tier (score 70-79): 90% to 98% of maxCeiling
+    // Solid (score 55-69): 80% to 90% of maxCeiling
     // Base: 65% of maxCeiling
+    final isTop7 = StayrarePlayerDatabase.isTop7Player(playerName);
     double targetFraction;
-    if (valuation.score >= 85) {
+    if (isTop7 || valuation.score >= 85) {
       targetFraction = 1.0;
     } else if (valuation.score >= 75) {
-      targetFraction = 0.92;
+      targetFraction = 0.95;
     } else if (valuation.score >= 65) {
-      targetFraction = 0.82;
+      targetFraction = 0.85;
     } else {
       targetFraction = 0.65;
     }

@@ -257,7 +257,6 @@ class SoloAiAuctionSession extends ChangeNotifier {
       CricketRole.bat: 0,
       CricketRole.bowl: 0,
       CricketRole.allRounder: 0,
-      CricketRole.wk: 0,
     };
     for (final p in squad) {
       map[p.valuation.role] = (map[p.valuation.role] ?? 0) + 1;
@@ -268,13 +267,18 @@ class SoloAiAuctionSession extends ChangeNotifier {
   Map<CricketRole, int> get userRoleCounts => getRoleCounts(userSquad);
   Map<CricketRole, int> get aiRoleCounts => getRoleCounts(aiSquad);
 
-  // Mandates: Min 1 WK, Min 3 BAT, Min 3 BOWL, Min 2 AR
+  // Mandates: Min 3 BAT, Min 2 BOWL, Min 2 AR (Min 5 Bowling Options Total)
   Map<CricketRole, int> get roleMandates => const {
-        CricketRole.wk: 1,
         CricketRole.bat: 3,
-        CricketRole.bowl: 3,
+        CricketRole.bowl: 2,
         CricketRole.allRounder: 2,
       };
+
+  int getBowlingOptions(List<SoloBoughtPlayer> squad) =>
+      squad.where((p) => p.valuation.role == CricketRole.bowl || p.valuation.role == CricketRole.allRounder).length;
+
+  int getPureBatters(List<SoloBoughtPlayer> squad) =>
+      squad.where((p) => p.valuation.role == CricketRole.bat).length;
 
   int getBasePriceForPlayer(PlayerValuation player) {
     if (isAcceleratedRound) {
@@ -632,13 +636,11 @@ class SoloAiAuctionSession extends ChangeNotifier {
       }
       if (isRoleNeeded) {
         if (player.role == CricketRole.bowl) {
-          return '📊 Targeting death-overs bowling specialist...';
+          return '🎯 Targeting frontline wicket-taking bowler...';
         } else if (player.role == CricketRole.allRounder) {
-          return '🏏 Assessing all-round balance & power-hitting...';
-        } else if (player.role == CricketRole.wk) {
-          return '🧤 Checking wicketkeeper anchor requirements...';
+          return '⚡ Assessing all-round balance & power-hitting...';
         } else {
-          return '📊 Prioritizing top-order batting depth...';
+          return '🏏 Prioritizing anchor batting depth...';
         }
       }
       return '🤔 Checking purse reserve & squad composition...';
@@ -699,6 +701,8 @@ class SoloAiAuctionSession extends ChangeNotifier {
         isAcceleratedRound: isAcceleratedRound,
         isJumpBidByOpponent: lastBidWasJump && currentLeader == SoloBidLeader.user,
         yourRoleCounts: aiRoleCounts,
+        yourSquadNames: aiSquad.map((p) => p.valuation.name).toList(),
+        userSquadNames: userSquad.map((p) => p.valuation.name).toList(),
       );
 
       final decision = _aiEngine.decide(input);
