@@ -714,7 +714,7 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
 
     if (aiSquadFull && !userSquadFull) {
       final available = _session.playerPool
-          .where((p) => _session.playerStatusMap[p.name] == SoloPlayerStatus.pool)
+          .where((p) => _session.playerStatusMap[p.name] == SoloPlayerStatus.pool || _session.playerStatusMap[p.name] == SoloPlayerStatus.unsold)
           .toList();
       final needed = _session.targetSquadSize - _session.userSquad.length;
 
@@ -1758,7 +1758,7 @@ class _SoloAiAuctionViewState extends State<SoloAiAuctionView> with SingleTicker
                 ),
                 icon: const Icon(Icons.casino_rounded, size: 16, color: Color(0xFFF59E0B)),
                 label: const Text('Draw Random Star', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                onPressed: _session.unassignedPlayersCount == 0
+                onPressed: (_session.unassignedPlayersCount == 0 && _session.unsoldPlayersCount == 0)
                     ? null
                     : () {
                         _session.drawNextRandomPlayer();

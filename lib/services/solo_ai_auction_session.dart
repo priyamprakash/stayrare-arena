@@ -459,7 +459,8 @@ class SoloAiAuctionSession extends ChangeNotifier {
   }
 
   void requestPlayerForAuction(PlayerValuation player) {
-    if (playerStatusMap[player.name] != SoloPlayerStatus.pool) return;
+    final status = playerStatusMap[player.name];
+    if (status != SoloPlayerStatus.pool && status != SoloPlayerStatus.unsold) return;
 
     if (currentPlayerOnBlock == null) {
       placePlayerOnBlock(player);
@@ -477,18 +478,39 @@ class SoloAiAuctionSession extends ChangeNotifier {
 
   void drawNextRandomPlayer() {
     // 0. Check if user requested/nominated a specific player for this turn
-    if (nominatedNextPlayer != null &&
-        playerStatusMap[nominatedNextPlayer!.name] == SoloPlayerStatus.pool) {
+    if (nominatedNextPlayer != null) {
       final selected = nominatedNextPlayer!;
-      nominatedNextPlayer = null;
-      placePlayerOnBlock(selected);
-      return;
+      final status = playerStatusMap[selected.name];
+      if (status == SoloPlayerStatus.pool || status == SoloPlayerStatus.unsold) {
+        nominatedNextPlayer = null;
+        placePlayerOnBlock(selected);
+        return;
+      }
     }
     nominatedNextPlayer = null;
 
-    final available = playerPool
+    final userFull = userSquad.length >= targetSquadSize;
+    final aiFull = aiSquad.length >= targetSquadSize;
+
+    if (userFull && aiFull) {
+      checkAuctionCompletion();
+      return;
+    }
+
+    List<PlayerValuation> available = playerPool
         .where((p) => playerStatusMap[p.name] == SoloPlayerStatus.pool)
         .toList();
+
+    // If unassigned fresh pool is empty, but squads are not full and unsold players exist:
+    // Automatically recycle ALL unsold players back into the pool (Accelerated Round)!
+    if (available.isEmpty && (!userFull || !aiFull) && unsoldPlayersCount > 0) {
+      startAcceleratedRound();
+      _sfx.playTimeoutGong();
+      _voice.speak('Fresh pool exhausted! Re-entering all unsold players into the accelerated pool at a 40% discount to complete squads!');
+      available = playerPool
+          .where((p) => playerStatusMap[p.name] == SoloPlayerStatus.pool)
+          .toList();
+    }
 
     if (available.isEmpty) {
       checkAuctionCompletion();
@@ -1118,16 +1140,11 @@ class SoloAiAuctionSession extends ChangeNotifier {
   void checkAuctionCompletion() {
     final userFull = userSquad.length >= targetSquadSize;
     final aiFull = aiSquad.length >= targetSquadSize;
-    final poolEmpty = unassignedPlayersCount == 0;
+    final freshPoolCount = unassignedPlayersCount;
+    final unsoldTotal = unsoldPlayersCount;
 
-    if (userFull && !aiFull && !poolEmpty) {
-      // User squad full! AI automatically selects remaining best players from pool at base price
-      _handleAiAutoFillRemaining();
-      return;
-    }
-
-    if ((userFull && aiFull) || poolEmpty) {
-      // Mark any remaining pool players as unsold so exactly 2 players remain unsold
+    // Case 1: Both squads reached target 10 players!
+    if (userFull && aiFull) {
       for (final p in playerPool) {
         if (playerStatusMap[p.name] == SoloPlayerStatus.pool) {
           playerStatusMap[p.name] = SoloPlayerStatus.unsold;
@@ -1142,6 +1159,40 @@ class SoloAiAuctionSession extends ChangeNotifier {
           }
         });
       }
+      notifyListeners();
+      return;
+    }
+
+    // Case 2: User squad is full, AI still needs players, and players exist in fresh pool or unsold
+    if (userFull && !aiFull) {
+      if (freshPoolCount > 0 || unsoldTotal > 0) {
+        _handleAiAutoFillRemaining();
+        return;
+      }
+    }
+
+    // Case 3: Fresh pool is empty, but squads are incomplete and unsold players exist.
+    // Automatically recycle unsold players into pool (Round 2) so user/AI can draft/complete squads!
+    if (freshPoolCount == 0 && unsoldTotal > 0 && (!userFull || !aiFull)) {
+      startAcceleratedRound();
+      _sfx.playTimeoutGong();
+      _voice.speak('Fresh pool exhausted! Re-entering all unsold players into the pool at a 40% discount so you can complete your squad.');
+      notifyListeners();
+      return;
+    }
+
+    // Case 4: No players left anywhere in pool or unsold (pool & unsold exhausted)
+    if (freshPoolCount == 0 && unsoldTotal == 0) {
+      if (!isAuctionCompleted) {
+        isAuctionCompleted = true;
+        _triggerFirebaseAndLearning();
+        Future.delayed(const Duration(milliseconds: 1400), () {
+          if (isAuctionCompleted) {
+            _voice.speak(postAuctionAiOpinion, tone: aiBelievesItWon ? AuctionTone.hype : AuctionTone.trashTalk);
+          }
+        });
+      }
+      notifyListeners();
     }
   }
 
@@ -1181,8 +1232,9 @@ class SoloAiAuctionSession extends ChangeNotifier {
       return;
     }
 
+    // Pick from both pool and unsold players to guarantee full squad
     final available = playerPool
-        .where((p) => playerStatusMap[p.name] == SoloPlayerStatus.pool)
+        .where((p) => playerStatusMap[p.name] == SoloPlayerStatus.pool || playerStatusMap[p.name] == SoloPlayerStatus.unsold)
         .toList();
 
     // Pick highest rated players remaining
@@ -1197,7 +1249,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
       playerStatusMap[p.name] = SoloPlayerStatus.soldAi;
     }
 
-    // Mark remaining unsold players as unsold
+    // Mark remaining unassigned pool players as unsold
     for (final p in playerPool) {
       if (playerStatusMap[p.name] == SoloPlayerStatus.pool) {
         playerStatusMap[p.name] = SoloPlayerStatus.unsold;
@@ -1222,7 +1274,8 @@ class SoloAiAuctionSession extends ChangeNotifier {
 
   void userDraftRemainingPlayerAtBase(PlayerValuation player) {
     if (userSquad.length >= targetSquadSize) return;
-    if (playerStatusMap[player.name] != SoloPlayerStatus.pool) return;
+    final status = playerStatusMap[player.name];
+    if (status != SoloPlayerStatus.pool && status != SoloPlayerStatus.unsold) return;
 
     final price = getBasePriceForPlayer(player);
     if (userPurse < price) return;
@@ -1232,15 +1285,7 @@ class SoloAiAuctionSession extends ChangeNotifier {
     playerStatusMap[player.name] = SoloPlayerStatus.soldUser;
     _voice.announceSold(playerName: player.name, amount: price, winnerName: userTeamName);
 
-    if (userSquad.length >= targetSquadSize || unassignedPlayersCount == 0) {
-      for (final p in playerPool) {
-        if (playerStatusMap[p.name] == SoloPlayerStatus.pool) {
-          playerStatusMap[p.name] = SoloPlayerStatus.unsold;
-        }
-      }
-      isAuctionCompleted = true;
-    }
-
+    checkAuctionCompletion();
     notifyListeners();
   }
 

@@ -678,5 +678,76 @@ void main() {
       expect(decision.action, 'bid');
       expect(decision.amount, 1450);
     });
+
+    test('Session automatically recycles unsold players into Accelerated Round when fresh pool is exhausted and squads incomplete', () {
+      final session = SoloAiAuctionSession();
+      session.initSession(squadTarget: 10);
+
+      // Buy 8 players for user and 8 players for AI
+      for (int i = 0; i < 8; i++) {
+        final p = session.playerPool[i];
+        session.playerStatusMap[p.name] = SoloPlayerStatus.soldUser;
+        session.userSquad.add(SoloBoughtPlayer(valuation: p, price: 1000));
+      }
+      for (int i = 8; i < 16; i++) {
+        final p = session.playerPool[i];
+        session.playerStatusMap[p.name] = SoloPlayerStatus.soldAi;
+        session.aiSquad.add(SoloBoughtPlayer(valuation: p, price: 1000));
+      }
+
+      // Mark the remaining 6 players as unsold
+      for (int i = 16; i < 22; i++) {
+        final p = session.playerPool[i];
+        session.playerStatusMap[p.name] = SoloPlayerStatus.unsold;
+      }
+
+      expect(session.unassignedPlayersCount, 0);
+      expect(session.unsoldPlayersCount, 6);
+      expect(session.isAuctionCompleted, false);
+
+      // Drawing next random player should automatically trigger Accelerated Round and recycle all 6 unsold players!
+      session.drawNextRandomPlayer();
+
+      expect(session.isAcceleratedRound, true);
+      expect(session.currentPlayerOnBlock, isNotNull);
+      expect(session.isAuctionCompleted, false);
+      // The remaining 5 unsold should now be in the active pool
+      expect(session.unassignedPlayersCount, 5);
+    });
+
+    test('User can directly nominate/re-auction an unsold player from the pool tab', () {
+      final session = SoloAiAuctionSession();
+      session.initSession(squadTarget: 10);
+
+      final unsoldPlayer = session.playerPool.first;
+      session.playerStatusMap[unsoldPlayer.name] = SoloPlayerStatus.unsold;
+
+      // User requests this unsold player for auction
+      session.requestPlayerForAuction(unsoldPlayer);
+
+      expect(session.currentPlayerOnBlock?.name, unsoldPlayer.name);
+      expect(session.playerStatusMap[unsoldPlayer.name], SoloPlayerStatus.onBlock);
+    });
+
+    test('userDraftRemainingPlayerAtBase allows drafting unsold players to complete squad', () {
+      final session = SoloAiAuctionSession();
+      session.initSession(squadTarget: 10);
+
+      // Fill user squad to 9
+      for (int i = 0; i < 9; i++) {
+        final p = session.playerPool[i];
+        session.playerStatusMap[p.name] = SoloPlayerStatus.soldUser;
+        session.userSquad.add(SoloBoughtPlayer(valuation: p, price: 1000));
+      }
+
+      final unsoldPlayer = session.playerPool[15];
+      session.playerStatusMap[unsoldPlayer.name] = SoloPlayerStatus.unsold;
+
+      session.userDraftRemainingPlayerAtBase(unsoldPlayer);
+
+      expect(session.userSquad.length, 10);
+      expect(session.userSquad.last.valuation.name, unsoldPlayer.name);
+      expect(session.playerStatusMap[unsoldPlayer.name], SoloPlayerStatus.soldUser);
+    });
   });
 }
